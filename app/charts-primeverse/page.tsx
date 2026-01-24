@@ -20,12 +20,18 @@ const PRIMEVERSE_COLORS = {
 const PRIMEVERSE_BASE_URL = "https://prime-verse.mn.co"
 const PRIMEVERSE_FEED_URL = "https://prime-verse.mn.co/spaces/21704112/feed"
 const PRIMEVERSE_LOGIN_URL = "https://prime-verse.mn.co/sign_in"
-// API Key for Prime Verse authentication
 const PRIMEVERSE_API_KEY = process.env.NEXT_PUBLIC_PRIMEVERSE_API_KEY || "mn_eab2f6d4618dc90c1f816a31ce849cae07c893143a874c9fe701ef2e384cc6c7"
 
 // Available studies (without KillShot, Supernova and Smartmonics)
 const availableStudies = ["FreedomZone", "DirectEdge", "TruthSignal", "LibertyPoint", "SovereignSync"] as const
 type StudyKey = (typeof availableStudies)[number]
+
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(...args)
+  }
+}
 
 export default function ChartsPrimeversePage() {
   const [mounted, setMounted] = useState(false)
@@ -48,18 +54,18 @@ export default function ChartsPrimeversePage() {
         const loginToken = urlParams.get("token")
         const fromParam = urlParams.get("from")
 
-        // If returned from login, wait a bit for session to sync
-        if (returnFromLogin || loginToken || fromParam) {
-          console.log("🔄 [PRIMEVERSE] Returned from external login, waiting for cookies to sync...")
-          console.log("📋 [PRIMEVERSE] URL params:", { returnFromLogin, loginToken, fromParam })
-          
-          // Wait longer for cookies to be set by the browser
-          await new Promise((resolve) => setTimeout(resolve, 3000))
+        const currentPath = window.location.pathname
+        if (currentPath !== "/charts-primeverse" && currentPath.startsWith("/")) {
+          debug("🔄 [PRIMEVERSE] Redirecting to Charts Primeverse from:", currentPath)
+          window.location.href = window.location.origin + "/charts-primeverse"
+          return
+        }
 
-          // Clear URL parameters after waiting
+        if (returnFromLogin || loginToken || fromParam) {
+          debug("🔄 [PRIMEVERSE] Returned from external login, waiting for cookies to sync...")
+          await new Promise((resolve) => setTimeout(resolve, 3000))
           if (returnFromLogin || loginToken || fromParam) {
             window.history.replaceState({}, document.title, window.location.pathname)
-            console.log("🧹 [PRIMEVERSE] URL parameters cleared")
           }
         }
 
@@ -69,13 +75,12 @@ export default function ChartsPrimeversePage() {
 
         while (attempts < maxAttempts && mounted) {
           attempts++
-          console.log(`🔍 [PRIMEVERSE] Attempt ${attempts}/${maxAttempts} to verify session...`)
+          debug(`🔍 [PRIMEVERSE] Attempt ${attempts}/${maxAttempts} to verify session...`)
 
           try {
-            // Try to verify by fetching user info from API
             const response = await fetch(`${PRIMEVERSE_BASE_URL}/api/v1/users/me`, {
               method: "GET",
-              credentials: "include", // Important: include cookies
+              credentials: "include",
               mode: "cors",
               headers: {
                 Accept: "application/json",
@@ -84,65 +89,59 @@ export default function ChartsPrimeversePage() {
               },
             })
 
-            console.log(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
+            debug(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
 
             if (response.ok) {
               const userData = await response.json()
-              console.log("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
+              debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
               if (mounted) {
                 setIsAuthenticated(true)
                 setIsChecking(false)
               }
               return
             } else if (response.status === 401 || response.status === 403) {
-              console.log(`⚠️ [PRIMEVERSE] Authentication failed (${response.status}), user not logged in`)
-              // Continue to next attempt or redirect
-            } else {
-              console.log(`⚠️ [PRIMEVERSE] Unexpected response status: ${response.status}`)
+              debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status})`)
             }
           } catch (fetchError: any) {
-            console.log("⚠️ [PRIMEVERSE] Error fetching user data:", fetchError.message)
+            debug("⚠️ [PRIMEVERSE] Error fetching user data:", fetchError.message)
             
-            // If CORS error, try alternative method: check if we can access the feed page
             if (fetchError.message?.includes("CORS") || fetchError.message?.includes("Failed to fetch")) {
-              console.log("🔄 [PRIMEVERSE] CORS error detected, trying alternative verification...")
+              debug("🔄 [PRIMEVERSE] CORS error detected, trying alternative verification...")
               
               try {
-                // Try to fetch feed page (no-cors mode to avoid CORS issues)
-                const feedResponse = await fetch(PRIMEVERSE_FEED_URL, {
+                await fetch(PRIMEVERSE_FEED_URL, {
                   method: "GET",
                   credentials: "include",
-                  mode: "no-cors", // This won't throw CORS errors but we can't read response
+                  mode: "no-cors",
                 })
                 
-                // If no error, assume authenticated (cookies are being sent)
-                console.log("✅ [PRIMEVERSE] Feed accessible (no-cors), assuming authenticated")
+                debug("✅ [PRIMEVERSE] Feed accessible (no-cors), assuming authenticated")
                 if (mounted) {
                   setIsAuthenticated(true)
                   setIsChecking(false)
                 }
                 return
               } catch (feedError) {
-                console.log("⚠️ [PRIMEVERSE] Feed check also failed:", feedError)
+                debug("⚠️ [PRIMEVERSE] Feed check also failed")
               }
             }
           }
 
-          // If no cookies on first attempt, wait a bit (might be loading)
           if (attempts < maxAttempts) {
-            const waitTime = attempts * 1500 // Increased wait time
-            console.log(`⏳ [PRIMEVERSE] Waiting ${waitTime}ms before next attempt...`)
+            const waitTime = attempts * 1500
+            debug(`⏳ [PRIMEVERSE] Waiting ${waitTime}ms before next attempt...`)
             await new Promise((resolve) => setTimeout(resolve, waitTime))
           }
         }
 
-        // If we got here after all attempts, no session found
-        console.log("⚠️ [PRIMEVERSE] No session found after all attempts - redirecting to login")
+        debug("⚠️ [PRIMEVERSE] No session found after all attempts - redirecting to login")
         if (mounted) {
           redirectToLogin()
         }
       } catch (error) {
-        console.error("❌ [PRIMEVERSE] Error verifying authentication:", error)
+        if (process.env.NODE_ENV === "development") {
+          console.error("❌ [PRIMEVERSE] Error verifying authentication:", error)
+        }
         if (mounted) {
           redirectToLogin()
         }
@@ -152,30 +151,25 @@ export default function ChartsPrimeversePage() {
     const redirectToLogin = () => {
       if (!mounted) return
       setIsChecking(false)
-      // Redirect to login with return URL
-      const currentUrl = window.location.origin + window.location.pathname
-      const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(currentUrl)}`
-      console.log("🔐 [PRIMEVERSE] No authentication found")
-      console.log("🔐 [PRIMEVERSE] Current URL:", currentUrl)
-      console.log("🔐 [PRIMEVERSE] Redirecting to login:", loginUrl)
+      const chartsPrimeverseUrl = window.location.origin + "/charts-primeverse"
+      const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}`
+      debug("🔐 [PRIMEVERSE] Redirecting to login:", loginUrl)
       window.location.href = loginUrl
     }
 
     setMounted(true)
     checkPrimeVerseAuth()
 
-    // Add listener for when page gains focus (after returning from login)
     const handleFocus = () => {
-      console.log("🌐 [PRIMEVERSE] Page focused, verifying authentication again...")
+      debug("🌐 [PRIMEVERSE] Page focused, verifying authentication again...")
       if (!isAuthenticated && mounted) {
         checkPrimeVerseAuth()
       }
     }
 
-    // Add listener for when page becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && !isAuthenticated && mounted) {
-        console.log("👁️ [PRIMEVERSE] Page visible, verifying authentication...")
+        debug("👁️ [PRIMEVERSE] Page visible, verifying authentication...")
         checkPrimeVerseAuth()
       }
     }
@@ -210,9 +204,9 @@ export default function ChartsPrimeversePage() {
     setIsAuthenticated(false)
     setIsChecking(true)
 
-    // Redirect to login
-    const currentUrl = window.location.href
-    const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(currentUrl)}`
+    const chartsPrimeverseUrl = window.location.origin + "/charts-primeverse"
+    const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}`
+    debug("🔐 [PRIMEVERSE] Logout - redirecting to login")
     window.location.href = loginUrl
   }
 

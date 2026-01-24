@@ -30,6 +30,13 @@ const scannerOrder = ["FreedomZone", "DirectEdge", "TruthSignal", "LibertyPoint"
 
 type ScannerKey = (typeof scannerOrder)[number]
 
+// Debug helper - only logs in development
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(...args)
+  }
+}
+
 // Scanners disponíveis
 const scannerStudies: Record<ScannerKey, string[]> = {
   FreedomZone: ["PUB;0b373fb0e6634a73bc8b838cf0690725"],
@@ -246,7 +253,7 @@ export default function TradingViewWidget({
 
   useEffect(() => {
     if (externalStudies) {
-      console.log("📊 [TRADINGVIEW] Updating studies via external props:", externalStudies)
+      debug("📊 [TRADINGVIEW] Updating studies via external props:", externalStudies)
       setSelectedStudies(externalStudies)
     }
   }, [externalStudies])
@@ -348,16 +355,16 @@ export default function TradingViewWidget({
 
       alert(`✅ Chart "${newChart.name}" saved successfully!`)
     } catch (error) {
-      console.error("Error saving chart:", error)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error saving chart:", error)
+      }
       alert("❌ Error saving chart. Please try again.")
     }
   }
 
   const handleLoadChart = async (chart: SavedChart) => {
     try {
-      console.log("📂 Loading chart:", chart.name)
-
-      // Restaurar estado do gráfico
+      debug("📂 Loading chart:", chart.name)
       if (chart.data) {
         setSelectedSymbol(chart.data.symbol || chart.symbol)
         setSelectedStudies(chart.data.studies || [])
@@ -368,7 +375,9 @@ export default function TradingViewWidget({
       setShowLoadDialog(false)
       alert(`✅ Chart "${chart.name}" loaded successfully!`)
     } catch (error) {
-      console.error("Error loading chart:", error)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error loading chart:", error)
+      }
       alert("❌ Error loading chart. Please try again.")
     }
   }
@@ -406,7 +415,7 @@ export default function TradingViewWidget({
       // Usar a abordagem simples que funcionava - todos os estudos no array studies
       const studiesToApply = selectedStudies.flatMap((key) => scannerStudies[key] || [])
 
-      console.log("📊 [TRADINGVIEW] Loading widget with studies:", {
+      debug("📊 [TRADINGVIEW] Loading widget with studies:", {
         selectedStudies,
         studiesToApply,
         count: studiesToApply.length,
@@ -501,41 +510,31 @@ export default function TradingViewWidget({
               setTimeout(() => {
                 try {
                   const allStudies = chart.getAllStudies?.() || []
-                  console.log(`📊 [TRADINGVIEW] Configuring ${allStudies.length} studies with AUTO and price scale`)
-                  console.log(
-                    `📊 [TRADINGVIEW] Found studies:`,
-                    allStudies.map((s: any) => s.name || s.id),
-                  )
+                  debug(`📊 [TRADINGVIEW] Configuring ${allStudies.length} studies with AUTO and price scale`)
 
                   allStudies.forEach((study: any, index: number) => {
                     try {
                       const studyName = study.name || study.id || `study-${index}`
-                      console.log(`📊 [TRADINGVIEW] Configuring study ${index + 1}/${allStudies.length}: ${studyName}`)
-
-                      // Habilitar AUTO (autoScale) - adapta escala automaticamente
                       if (typeof study.setAutoScale === "function") {
                         study.setAutoScale(true)
-                        console.log(`✅ [TRADINGVIEW] AUTO enabled for ${studyName}`)
                       }
-                      // Configurar para usar apenas escala de preços (não criar escala separada)
                       if (typeof study.setPriceScale === "function") {
                         study.setPriceScale(true)
-                        console.log(`✅ [TRADINGVIEW] Price scale configured for ${studyName}`)
                       }
-                      // Alternativa via setEntityInfo se disponível
                       if (typeof study.setEntityInfo === "function") {
                         study.setEntityInfo({
                           priceScaleId: "right",
                           autoScale: true,
                         })
-                        console.log(`✅ [TRADINGVIEW] EntityInfo configured for ${studyName}`)
                       }
                     } catch (e) {
-                      console.warn(`⚠️ [TRADINGVIEW] Error configuring study ${index}:`, e)
+                      if (process.env.NODE_ENV === "development") {
+                        console.warn(`⚠️ [TRADINGVIEW] Error configuring study ${index}:`, e)
+                      }
                     }
                   })
 
-                  console.log(`✅ [TRADINGVIEW] Study configuration complete`)
+                  debug(`✅ [TRADINGVIEW] Study configuration complete`)
                 } catch (e) {
                   console.warn("Failed to apply resetData and configure studies:", e)
                 }
@@ -549,7 +548,9 @@ export default function TradingViewWidget({
       setWidgetLoaded(true)
       setError(null)
     } catch (err: any) {
-      console.error("Error initializing widget:", err)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error initializing widget:", err)
+      }
       setError(`Error initializing widget: ${err.message}`)
     } finally {
       isLoadingScanner.current = false
