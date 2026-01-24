@@ -208,7 +208,7 @@ export default function TradingViewWidget({
   externalTimeframe?: string
   externalTheme?: "light" | "dark"
   externalStudies?: ScannerKey[]
-  excludedStudies?: ScannerKey[]
+  excludedStudies?: string[]
   onSymbolChange?: (symbol: string) => void
   onTimeframeChange?: (timeframe: string) => void
   onThemeChange?: (theme: "light" | "dark") => void

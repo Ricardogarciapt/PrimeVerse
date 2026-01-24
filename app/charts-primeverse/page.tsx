@@ -336,7 +336,7 @@ export default function ChartsPrimeversePage() {
         >
           <TradingViewWidget
             externalStudies={selectedStudies as any}
-            excludedStudies={["KillShot", "Supernova", "Smartmonics"]}
+            excludedStudies={["KillShot", "Supernova", "Smartmonics"] as string[]}
             onStudiesChange={handleStudiesChange}
           />
         </div>
