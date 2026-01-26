@@ -49,7 +49,7 @@ export default function ChartsPrimeversePage() {
   const [showHeatmap, setShowHeatmap] = useState(true) // Mostrar scanners por padrão quando logado
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["FreedomZone"])
 
-  // Detect if we're on a Prime Verse page and redirect seamlessly to Charts Primeverse
+  // Detect if we're on a Prime Verse or Mighty Networks page and redirect seamlessly to Charts Primeverse
   useEffect(() => {
     if (typeof window === "undefined") return
 
@@ -66,9 +66,17 @@ export default function ChartsPrimeversePage() {
       return
     }
 
-    // Also check if we came from Prime Verse (referrer check)
-    if (referrer && referrer.includes("prime-verse.mn.co") && !referrer.includes("charts-primeverse")) {
-      debug("🔄 [PRIMEVERSE] Detected referrer from Prime Verse, ensuring we're on Charts Primeverse...")
+    // Check if we're on mightynetworks.com domain (404 pages, etc.)
+    if (hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
+      debug("🔄 [PRIMEVERSE] Detected Mighty Networks domain, redirecting seamlessly to Charts Primeverse...")
+      const chartsUrl = getChartsPrimeverseUrl()
+      window.location.replace(chartsUrl)
+      return
+    }
+
+    // Also check if we came from Prime Verse or Mighty Networks (referrer check)
+    if (referrer && (referrer.includes("prime-verse.mn.co") || referrer.includes("mightynetworks.com")) && !referrer.includes("charts-primeverse")) {
+      debug("🔄 [PRIMEVERSE] Detected referrer from Prime Verse/Mighty Networks, ensuring we're on Charts Primeverse...")
       const chartsUrl = getChartsPrimeverseUrl()
       if (window.location.href !== chartsUrl) {
         window.location.replace(chartsUrl)
@@ -84,12 +92,16 @@ export default function ChartsPrimeversePage() {
       try {
         setIsChecking(true)
 
-        // Check if we're on prime-verse.mn.co domain - redirect immediately
-        if (typeof window !== "undefined" && window.location.hostname === "prime-verse.mn.co") {
-          debug("🔄 [PRIMEVERSE] Detected Prime Verse domain in auth check, redirecting...")
-          const chartsUrl = getChartsPrimeverseUrl()
-          window.location.href = chartsUrl
-          return
+        // Check if we're on prime-verse.mn.co or mightynetworks.com domain - redirect immediately
+        if (typeof window !== "undefined") {
+          const hostname = window.location.hostname
+          if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co") ||
+              hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
+            debug("🔄 [PRIMEVERSE] Detected Prime Verse/Mighty Networks domain in auth check, redirecting...")
+            const chartsUrl = getChartsPrimeverseUrl()
+            window.location.replace(chartsUrl)
+            return
+          }
         }
 
         // Check if there are return parameters after external login
@@ -241,7 +253,7 @@ export default function ChartsPrimeversePage() {
     window.addEventListener("focus", handleFocus)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
-    // Monitor for Prime Verse redirects - check periodically if we're on wrong domain
+    // Monitor for Prime Verse/Mighty Networks redirects - check periodically if we're on wrong domain
     const checkDomainInterval = setInterval(() => {
       if (!mounted) {
         clearInterval(checkDomainInterval)
@@ -250,9 +262,10 @@ export default function ChartsPrimeversePage() {
       
       if (typeof window !== "undefined") {
         const hostname = window.location.hostname
-        // If we're on prime-verse.mn.co, redirect to Charts Primeverse
-        if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co")) {
-          debug("🔄 [PRIMEVERSE] Domain check: Detected Prime Verse domain, redirecting...")
+        // If we're on prime-verse.mn.co or mightynetworks.com, redirect to Charts Primeverse
+        if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co") ||
+            hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
+          debug("🔄 [PRIMEVERSE] Domain check: Detected Prime Verse/Mighty Networks domain, redirecting...")
           const chartsUrl = getChartsPrimeverseUrl()
           window.location.replace(chartsUrl)
           clearInterval(checkDomainInterval)
