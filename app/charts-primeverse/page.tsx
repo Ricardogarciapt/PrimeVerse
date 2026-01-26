@@ -21,6 +21,7 @@ const PRIMEVERSE_BASE_URL = "https://prime-verse.mn.co"
 const PRIMEVERSE_FEED_URL = "https://prime-verse.mn.co/spaces/21704112/feed"
 const PRIMEVERSE_LOGIN_URL = "https://prime-verse.mn.co/sign_in"
 const PRIMEVERSE_API_KEY = process.env.NEXT_PUBLIC_PRIMEVERSE_API_KEY || "mn_eab2f6d4618dc90c1f816a31ce849cae07c893143a874c9fe701ef2e384cc6c7"
+const PRODUCTION_URL = "https://charts-primeverse.vercel.app"
 
 // Available studies (without KillShot, Supernova and Smartmonics)
 const availableStudies = ["FreedomZone", "DirectEdge", "TruthSignal", "LibertyPoint", "SovereignSync"] as const
@@ -31,6 +32,14 @@ const debug = (...args: any[]) => {
   if (process.env.NODE_ENV === "development") {
     console.log(...args)
   }
+}
+
+// Get the correct Charts Primeverse URL (production or local)
+const getChartsPrimeverseUrl = () => {
+  const isProduction = process.env.NODE_ENV === "production" || (typeof window !== "undefined" && window.location.hostname.includes("vercel.app"))
+  return isProduction 
+    ? `${PRODUCTION_URL}/charts-primeverse`
+    : (typeof window !== "undefined" ? window.location.origin : "") + "/charts-primeverse"
 }
 
 export default function ChartsPrimeversePage() {
@@ -57,84 +66,89 @@ export default function ChartsPrimeversePage() {
         const currentPath = window.location.pathname
         if (currentPath !== "/charts-primeverse" && currentPath.startsWith("/")) {
           debug("🔄 [PRIMEVERSE] Redirecting to Charts Primeverse from:", currentPath)
-          window.location.href = window.location.origin + "/charts-primeverse"
+          window.location.href = getChartsPrimeverseUrl()
           return
         }
 
+        // Quick check: if returning from login, minimal delay for cookie sync
         if (returnFromLogin || loginToken || fromParam) {
-          debug("🔄 [PRIMEVERSE] Returned from external login, waiting for cookies to sync...")
-          await new Promise((resolve) => setTimeout(resolve, 3000))
-          if (returnFromLogin || loginToken || fromParam) {
-            window.history.replaceState({}, document.title, window.location.pathname)
-          }
+          debug("🔄 [PRIMEVERSE] Returned from external login, quick cookie sync...")
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          window.history.replaceState({}, document.title, window.location.pathname)
         }
 
-        // Verify session by making API call to check authentication
-        let attempts = 0
-        const maxAttempts = 3
+        // Fast authentication check - single attempt with timeout
+        debug("🔍 [PRIMEVERSE] Fast authentication check...")
 
-        while (attempts < maxAttempts && mounted) {
-          attempts++
-          debug(`🔍 [PRIMEVERSE] Attempt ${attempts}/${maxAttempts} to verify session...`)
+        try {
+          // Use Promise.race to add timeout for faster failure
+          const authCheck = fetch(`${PRIMEVERSE_BASE_URL}/api/v1/users/me`, {
+            method: "GET",
+            credentials: "include",
+            mode: "cors",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${PRIMEVERSE_API_KEY}`,
+              "X-API-Key": PRIMEVERSE_API_KEY,
+            },
+          })
 
-          try {
-            const response = await fetch(`${PRIMEVERSE_BASE_URL}/api/v1/users/me`, {
-              method: "GET",
-              credentials: "include",
-              mode: "cors",
-              headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${PRIMEVERSE_API_KEY}`,
-                "X-API-Key": PRIMEVERSE_API_KEY,
-              },
-            })
+          const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Timeout")), 3000)
+          )
 
-            debug(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
+          const response = await Promise.race([authCheck, timeout]) as Response
 
-            if (response.ok) {
-              const userData = await response.json()
-              debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
+          debug(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
+
+          if (response.ok) {
+            const userData = await response.json()
+            debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
+            if (mounted) {
+              setIsAuthenticated(true)
+              setIsChecking(false)
+            }
+            return
+          } else if (response.status === 401 || response.status === 403) {
+            debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status})`)
+            if (mounted) {
+              redirectToLogin()
+            }
+            return
+          }
+        } catch (fetchError: any) {
+          debug("⚠️ [PRIMEVERSE] Error fetching user data:", fetchError.message)
+          
+          // Quick fallback: try no-cors feed check
+          if (fetchError.message?.includes("CORS") || fetchError.message?.includes("Failed to fetch") || fetchError.message?.includes("Timeout")) {
+            debug("🔄 [PRIMEVERSE] Trying quick feed check...")
+            
+            try {
+              const feedCheck = fetch(PRIMEVERSE_FEED_URL, {
+                method: "GET",
+                credentials: "include",
+                mode: "no-cors",
+              })
+              
+              const feedTimeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Feed timeout")), 2000)
+              )
+              
+              await Promise.race([feedCheck, feedTimeout])
+              
+              debug("✅ [PRIMEVERSE] Feed accessible, assuming authenticated")
               if (mounted) {
                 setIsAuthenticated(true)
                 setIsChecking(false)
               }
               return
-            } else if (response.status === 401 || response.status === 403) {
-              debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status})`)
+            } catch (feedError) {
+              debug("⚠️ [PRIMEVERSE] Feed check failed, redirecting to login")
             }
-          } catch (fetchError: any) {
-            debug("⚠️ [PRIMEVERSE] Error fetching user data:", fetchError.message)
-            
-            if (fetchError.message?.includes("CORS") || fetchError.message?.includes("Failed to fetch")) {
-              debug("🔄 [PRIMEVERSE] CORS error detected, trying alternative verification...")
-              
-              try {
-                await fetch(PRIMEVERSE_FEED_URL, {
-                  method: "GET",
-                  credentials: "include",
-                  mode: "no-cors",
-                })
-                
-                debug("✅ [PRIMEVERSE] Feed accessible (no-cors), assuming authenticated")
-                if (mounted) {
-                  setIsAuthenticated(true)
-                  setIsChecking(false)
-                }
-                return
-              } catch (feedError) {
-                debug("⚠️ [PRIMEVERSE] Feed check also failed")
-              }
-            }
-          }
-
-          if (attempts < maxAttempts) {
-            const waitTime = attempts * 1500
-            debug(`⏳ [PRIMEVERSE] Waiting ${waitTime}ms before next attempt...`)
-            await new Promise((resolve) => setTimeout(resolve, waitTime))
           }
         }
 
-        debug("⚠️ [PRIMEVERSE] No session found after all attempts - redirecting to login")
+        debug("⚠️ [PRIMEVERSE] No session found - redirecting to login")
         if (mounted) {
           redirectToLogin()
         }
@@ -151,7 +165,7 @@ export default function ChartsPrimeversePage() {
     const redirectToLogin = () => {
       if (!mounted) return
       setIsChecking(false)
-      const chartsPrimeverseUrl = window.location.origin + "/charts-primeverse"
+      const chartsPrimeverseUrl = getChartsPrimeverseUrl()
       const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}`
       debug("🔐 [PRIMEVERSE] Redirecting to login:", loginUrl)
       window.location.href = loginUrl
@@ -204,7 +218,7 @@ export default function ChartsPrimeversePage() {
     setIsAuthenticated(false)
     setIsChecking(true)
 
-    const chartsPrimeverseUrl = window.location.origin + "/charts-primeverse"
+    const chartsPrimeverseUrl = getChartsPrimeverseUrl()
     const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}`
     debug("🔐 [PRIMEVERSE] Logout - redirecting to login")
     window.location.href = loginUrl
