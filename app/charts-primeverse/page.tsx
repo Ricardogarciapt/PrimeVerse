@@ -49,6 +49,33 @@ export default function ChartsPrimeversePage() {
   const [showHeatmap, setShowHeatmap] = useState(true) // Mostrar scanners por padrão quando logado
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["FreedomZone"])
 
+  // Detect if we're on a Prime Verse page and redirect seamlessly to Charts Primeverse
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const hostname = window.location.hostname
+    const referrer = document.referrer
+
+    // Check if we're on prime-verse.mn.co domain (any page like /spaces/21082967/page, etc.)
+    if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co")) {
+      debug("🔄 [PRIMEVERSE] Detected Prime Verse domain, redirecting seamlessly to Charts Primeverse...")
+      // Redirect immediately to Charts Primeverse with scanners enabled
+      const chartsUrl = getChartsPrimeverseUrl()
+      // Use replace to avoid adding to history
+      window.location.replace(chartsUrl)
+      return
+    }
+
+    // Also check if we came from Prime Verse (referrer check)
+    if (referrer && referrer.includes("prime-verse.mn.co") && !referrer.includes("charts-primeverse")) {
+      debug("🔄 [PRIMEVERSE] Detected referrer from Prime Verse, ensuring we're on Charts Primeverse...")
+      const chartsUrl = getChartsPrimeverseUrl()
+      if (window.location.href !== chartsUrl) {
+        window.location.replace(chartsUrl)
+      }
+    }
+  }, [])
+
   // Verify Prime Verse authentication via feed
   useEffect(() => {
     let mounted = true
@@ -57,11 +84,30 @@ export default function ChartsPrimeversePage() {
       try {
         setIsChecking(true)
 
+        // Check if we're on prime-verse.mn.co domain - redirect immediately
+        if (typeof window !== "undefined" && window.location.hostname === "prime-verse.mn.co") {
+          debug("🔄 [PRIMEVERSE] Detected Prime Verse domain in auth check, redirecting...")
+          const chartsUrl = getChartsPrimeverseUrl()
+          window.location.href = chartsUrl
+          return
+        }
+
         // Check if there are return parameters after external login
         const urlParams = new URLSearchParams(window.location.search)
         const returnFromLogin = urlParams.get("return") === "true"
+        const returnTo = urlParams.get("return_to")
         const loginToken = urlParams.get("token")
         const fromParam = urlParams.get("from")
+
+        // If return_to is charts-primeverse, ensure we're on the right page
+        if (returnTo === "charts-primeverse") {
+          const chartsUrl = getChartsPrimeverseUrl()
+          if (window.location.href !== chartsUrl) {
+            debug("🔄 [PRIMEVERSE] Redirecting to Charts Primeverse based on return_to parameter")
+            window.location.replace(chartsUrl)
+            return
+          }
+        }
 
         const currentPath = window.location.pathname
         if (currentPath !== "/charts-primeverse" && currentPath.startsWith("/")) {
@@ -71,9 +117,10 @@ export default function ChartsPrimeversePage() {
         }
 
         // Quick check: if returning from login, minimal delay for cookie sync
-        if (returnFromLogin || loginToken || fromParam) {
+        if (returnFromLogin || returnTo === "charts-primeverse" || loginToken || fromParam) {
           debug("🔄 [PRIMEVERSE] Returned from external login, quick cookie sync...")
           await new Promise((resolve) => setTimeout(resolve, 500))
+          // Clean URL parameters
           window.history.replaceState({}, document.title, window.location.pathname)
         }
 
@@ -168,7 +215,8 @@ export default function ChartsPrimeversePage() {
       if (!mounted) return
       setIsChecking(false)
       const chartsPrimeverseUrl = getChartsPrimeverseUrl()
-      const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}`
+      // Add explicit return parameter to ensure we come back to Charts Primeverse
+      const loginUrl = `${PRIMEVERSE_LOGIN_URL}?from=${encodeURIComponent(chartsPrimeverseUrl)}&return_to=charts-primeverse`
       debug("🔐 [PRIMEVERSE] Redirecting to login:", loginUrl)
       window.location.href = loginUrl
     }
@@ -193,8 +241,28 @@ export default function ChartsPrimeversePage() {
     window.addEventListener("focus", handleFocus)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
+    // Monitor for Prime Verse redirects - check periodically if we're on wrong domain
+    const checkDomainInterval = setInterval(() => {
+      if (!mounted) {
+        clearInterval(checkDomainInterval)
+        return
+      }
+      
+      if (typeof window !== "undefined") {
+        const hostname = window.location.hostname
+        // If we're on prime-verse.mn.co, redirect to Charts Primeverse
+        if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co")) {
+          debug("🔄 [PRIMEVERSE] Domain check: Detected Prime Verse domain, redirecting...")
+          const chartsUrl = getChartsPrimeverseUrl()
+          window.location.replace(chartsUrl)
+          clearInterval(checkDomainInterval)
+        }
+      }
+    }, 1000) // Check every second
+
     return () => {
       mounted = false
+      clearInterval(checkDomainInterval)
       window.removeEventListener("focus", handleFocus)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
