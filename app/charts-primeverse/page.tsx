@@ -46,7 +46,7 @@ export default function ChartsPrimeversePage() {
   const [mounted, setMounted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
-  const [showHeatmap, setShowHeatmap] = useState(false)
+  const [showHeatmap, setShowHeatmap] = useState(true) // Mostrar scanners por padrão quando logado
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["FreedomZone"])
 
   // Verify Prime Verse authentication via feed
@@ -101,14 +101,15 @@ export default function ChartsPrimeversePage() {
 
           debug(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
 
-          if (response.ok) {
-            const userData = await response.json()
-            debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
-            if (mounted) {
-              setIsAuthenticated(true)
-              setIsChecking(false)
-            }
-            return
+            if (response.ok) {
+              const userData = await response.json()
+              debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
+              if (mounted) {
+                setIsAuthenticated(true)
+                setIsChecking(false)
+                setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
+              }
+              return
           } else if (response.status === 401 || response.status === 403) {
             debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status})`)
             if (mounted) {
@@ -140,6 +141,7 @@ export default function ChartsPrimeversePage() {
               if (mounted) {
                 setIsAuthenticated(true)
                 setIsChecking(false)
+                setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
               }
               return
             } catch (feedError) {
