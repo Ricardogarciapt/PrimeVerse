@@ -49,98 +49,54 @@ export default function ChartsPrimeversePage() {
   const [showHeatmap, setShowHeatmap] = useState(true) // Mostrar scanners por padrão quando logado
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["FreedomZone"])
 
-  // Detect if we're on a Prime Verse or Mighty Networks page and redirect seamlessly to Charts Primeverse
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    const hostname = window.location.hostname
-    const referrer = document.referrer
-
-    // Check if we're on prime-verse.mn.co domain (any page like /spaces/21082967/page, etc.)
-    if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co")) {
-      debug("🔄 [PRIMEVERSE] Detected Prime Verse domain, redirecting seamlessly to Charts Primeverse...")
-      // Redirect immediately to Charts Primeverse with scanners enabled
-      const chartsUrl = getChartsPrimeverseUrl()
-      // Use replace to avoid adding to history
-      window.location.replace(chartsUrl)
-      return
-    }
-
-    // Check if we're on mightynetworks.com domain (404 pages, etc.)
-    if (hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
-      debug("🔄 [PRIMEVERSE] Detected Mighty Networks domain, redirecting seamlessly to Charts Primeverse...")
-      const chartsUrl = getChartsPrimeverseUrl()
-      window.location.replace(chartsUrl)
-      return
-    }
-
-    // Also check if we came from Prime Verse or Mighty Networks (referrer check)
-    if (referrer && (referrer.includes("prime-verse.mn.co") || referrer.includes("mightynetworks.com")) && !referrer.includes("charts-primeverse")) {
-      debug("🔄 [PRIMEVERSE] Detected referrer from Prime Verse/Mighty Networks, ensuring we're on Charts Primeverse...")
-      const chartsUrl = getChartsPrimeverseUrl()
-      if (window.location.href !== chartsUrl) {
-        window.location.replace(chartsUrl)
-      }
-    }
-  }, [])
-
-  // Verify Prime Verse authentication via feed
+  // Verify Prime Verse authentication and handle redirects
   useEffect(() => {
     let mounted = true
 
     const checkPrimeVerseAuth = async () => {
       try {
+        if (typeof window === "undefined") return
+
         setIsChecking(true)
 
-        // Check if we're on prime-verse.mn.co or mightynetworks.com domain - redirect immediately
-        if (typeof window !== "undefined") {
-          const hostname = window.location.hostname
-          if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co") ||
-              hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
-            debug("🔄 [PRIMEVERSE] Detected Prime Verse/Mighty Networks domain in auth check, redirecting...")
-            const chartsUrl = getChartsPrimeverseUrl()
-            window.location.replace(chartsUrl)
-            return
-          }
+        const hostname = window.location.hostname
+        const chartsUrl = getChartsPrimeverseUrl()
+
+        // STEP 1: If we're on wrong domain (Prime Verse or Mighty Networks), redirect immediately
+        if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co") ||
+            hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
+          debug("🔄 [PRIMEVERSE] Detected wrong domain, redirecting to Charts Primeverse...")
+          window.location.replace(chartsUrl)
+          return
         }
 
-        // Check if there are return parameters after external login
+        // STEP 2: Ensure we're on the correct path
+        const currentPath = window.location.pathname
+        if (currentPath !== "/charts-primeverse") {
+          debug("🔄 [PRIMEVERSE] Wrong path, redirecting to Charts Primeverse...")
+          window.location.replace(chartsUrl)
+          return
+        }
+
+        // STEP 3: Clean URL parameters if returning from login
         const urlParams = new URLSearchParams(window.location.search)
         const returnFromLogin = urlParams.get("return") === "true"
         const returnTo = urlParams.get("return_to")
         const loginToken = urlParams.get("token")
         const fromParam = urlParams.get("from")
 
-        // If return_to is charts-primeverse, ensure we're on the right page
-        if (returnTo === "charts-primeverse") {
-          const chartsUrl = getChartsPrimeverseUrl()
-          if (window.location.href !== chartsUrl) {
-            debug("🔄 [PRIMEVERSE] Redirecting to Charts Primeverse based on return_to parameter")
-            window.location.replace(chartsUrl)
-            return
-          }
-        }
-
-        const currentPath = window.location.pathname
-        if (currentPath !== "/charts-primeverse" && currentPath.startsWith("/")) {
-          debug("🔄 [PRIMEVERSE] Redirecting to Charts Primeverse from:", currentPath)
-          window.location.href = getChartsPrimeverseUrl()
-          return
-        }
-
-        // Quick check: if returning from login, minimal delay for cookie sync
         if (returnFromLogin || returnTo === "charts-primeverse" || loginToken || fromParam) {
-          debug("🔄 [PRIMEVERSE] Returned from external login, quick cookie sync...")
-          await new Promise((resolve) => setTimeout(resolve, 500))
-          // Clean URL parameters
+          debug("🔄 [PRIMEVERSE] Cleaning URL parameters after login...")
           window.history.replaceState({}, document.title, window.location.pathname)
+          // Small delay to ensure cookies are synced
+          await new Promise((resolve) => setTimeout(resolve, 500))
         }
 
-        // Fast authentication check - single attempt with timeout
-        debug("🔍 [PRIMEVERSE] Fast authentication check...")
+        // STEP 4: Validate authentication
+        debug("🔍 [PRIMEVERSE] Validating authentication...")
 
         try {
-          // Use Promise.race to add timeout for faster failure
+          // Try API authentication first
           const authCheck = fetch(`${PRIMEVERSE_BASE_URL}/api/v1/users/me`, {
             method: "GET",
             credentials: "include",
@@ -153,63 +109,59 @@ export default function ChartsPrimeversePage() {
           })
 
           const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout")), 3000)
+            setTimeout(() => reject(new Error("Timeout")), 4000)
           )
 
           const response = await Promise.race([authCheck, timeout]) as Response
 
           debug(`📡 [PRIMEVERSE] API Response status: ${response.status}`)
 
-            if (response.ok) {
-              const userData = await response.json()
-              debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
-              if (mounted) {
-                setIsAuthenticated(true)
-                setIsChecking(false)
-                setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
-              }
-              return
-          } else if (response.status === 401 || response.status === 403) {
-            debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status})`)
+          if (response.ok) {
+            const userData = await response.json()
+            debug("✅ [PRIMEVERSE] User authenticated:", userData.email || userData.id || "User found")
             if (mounted) {
-              redirectToLogin()
+              setIsAuthenticated(true)
+              setIsChecking(false)
+              setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
             }
             return
+          } else if (response.status === 401 || response.status === 403) {
+            debug(`⚠️ [PRIMEVERSE] Authentication failed (${response.status}), trying feed check...`)
+            // Don't redirect immediately, try feed check first
           }
         } catch (fetchError: any) {
-          debug("⚠️ [PRIMEVERSE] Error fetching user data:", fetchError.message)
-          
-          // Quick fallback: try no-cors feed check
-          if (fetchError.message?.includes("CORS") || fetchError.message?.includes("Failed to fetch") || fetchError.message?.includes("Timeout")) {
-            debug("🔄 [PRIMEVERSE] Trying quick feed check...")
-            
-            try {
-              const feedCheck = fetch(PRIMEVERSE_FEED_URL, {
-                method: "GET",
-                credentials: "include",
-                mode: "no-cors",
-              })
-              
-              const feedTimeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Feed timeout")), 2000)
-              )
-              
-              await Promise.race([feedCheck, feedTimeout])
-              
-              debug("✅ [PRIMEVERSE] Feed accessible, assuming authenticated")
-              if (mounted) {
-                setIsAuthenticated(true)
-                setIsChecking(false)
-                setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
-              }
-              return
-            } catch (feedError) {
-              debug("⚠️ [PRIMEVERSE] Feed check failed, redirecting to login")
-            }
-          }
+          debug("⚠️ [PRIMEVERSE] API check failed:", fetchError.message)
+          // Continue to feed check
         }
 
-        debug("⚠️ [PRIMEVERSE] No session found - redirecting to login")
+        // STEP 5: Fallback - try feed check (no-cors)
+        try {
+          debug("🔄 [PRIMEVERSE] Trying feed check as fallback...")
+          const feedCheck = fetch(PRIMEVERSE_FEED_URL, {
+            method: "GET",
+            credentials: "include",
+            mode: "no-cors",
+          })
+          
+          const feedTimeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Feed timeout")), 3000)
+          )
+          
+          await Promise.race([feedCheck, feedTimeout])
+          
+          debug("✅ [PRIMEVERSE] Feed accessible, user authenticated")
+          if (mounted) {
+            setIsAuthenticated(true)
+            setIsChecking(false)
+            setShowHeatmap(true) // Ativar scanners automaticamente quando autenticado
+          }
+          return
+        } catch (feedError) {
+          debug("⚠️ [PRIMEVERSE] Feed check also failed, redirecting to login")
+        }
+
+        // STEP 6: No authentication found - redirect to login
+        debug("⚠️ [PRIMEVERSE] No authentication found - redirecting to login")
         if (mounted) {
           redirectToLogin()
         }
@@ -253,29 +205,8 @@ export default function ChartsPrimeversePage() {
     window.addEventListener("focus", handleFocus)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
-    // Monitor for Prime Verse/Mighty Networks redirects - check periodically if we're on wrong domain
-    const checkDomainInterval = setInterval(() => {
-      if (!mounted) {
-        clearInterval(checkDomainInterval)
-        return
-      }
-      
-      if (typeof window !== "undefined") {
-        const hostname = window.location.hostname
-        // If we're on prime-verse.mn.co or mightynetworks.com, redirect to Charts Primeverse
-        if (hostname === "prime-verse.mn.co" || hostname.includes("prime-verse.mn.co") ||
-            hostname === "mightynetworks.com" || hostname.includes("mightynetworks.com")) {
-          debug("🔄 [PRIMEVERSE] Domain check: Detected Prime Verse/Mighty Networks domain, redirecting...")
-          const chartsUrl = getChartsPrimeverseUrl()
-          window.location.replace(chartsUrl)
-          clearInterval(checkDomainInterval)
-        }
-      }
-    }, 1000) // Check every second
-
     return () => {
       mounted = false
-      clearInterval(checkDomainInterval)
       window.removeEventListener("focus", handleFocus)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
