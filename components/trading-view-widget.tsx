@@ -478,17 +478,24 @@ export default function TradingViewWidget({
         overrides: {
           "mainSeriesProperties.showCountdown": true,
           "scalesProperties.showSeriesLastValue": true,
-          // Esconder completamente legendas/valores dos estudos em todos os painéis
+          // Esconder completamente legendas/valores/títulos dos estudos
           "scalesProperties.showStudyLastValue": false,
           "paneProperties.legendProperties.showStudyTitles": false,
           "paneProperties.legendProperties.showStudyArguments": false,
           "paneProperties.legendProperties.showStudyValues": false,
+          "paneProperties.legendProperties.showLegend": false,
+          "paneProperties.legendProperties.showSeriesTitle": false,
+          "paneProperties.legendProperties.showStudyTitle": false,
+          "paneProperties.legendProperties.showStudyPlotLabels": false,
+          "paneProperties.legendProperties.showStudyPlotNames": false,
+          "paneProperties.legendProperties.showStudyPlotValues": false,
+          "paneProperties.legendProperties.showStudyPlotTitles": false,
           volumePaneSize: "hide",
           // === PRICE SCALE ===
-          "scalesProperties.autoScale": true, // Auto (fits data to screen)
-          "scalesProperties.lockPriceToBarRatio": false, // Lock price to bar ratio
-          "scalesProperties.scaleSeriesOnly": true, // Scale price chart only
-          "scalesProperties.invertScale": false, // Invert scale
+          "scalesProperties.autoScale": true,
+          "scalesProperties.lockPriceToBarRatio": false,
+          "scalesProperties.scaleSeriesOnly": true,
+          "scalesProperties.invertScale": false,
         },
       }
 
@@ -514,7 +521,6 @@ export default function TradingViewWidget({
 
                   allStudies.forEach((study: any, index: number) => {
                     try {
-                      const studyName = study.name || study.id || `study-${index}`
                       if (typeof study.setAutoScale === "function") {
                         study.setAutoScale(true)
                       }
@@ -526,6 +532,16 @@ export default function TradingViewWidget({
                           priceScaleId: "right",
                           autoScale: true,
                         })
+                      }
+                      // Esconder título do estudo
+                      if (typeof study.setVisible === "function") {
+                        // Manter visível mas esconder título
+                      }
+                      if (typeof study.setTitle === "function") {
+                        study.setTitle("")
+                      }
+                      if (typeof study.hideTitle === "function") {
+                        study.hideTitle()
                       }
                     } catch (e) {
                       if (process.env.NODE_ENV === "development") {
