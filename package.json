@@ -1,13 +1,14 @@
 {
-  "name": "charts-primeverse-standalone",
+  "name": "primeverse",
   "version": "1.0.0",
   "private": true,
-  "description": "Charts Primeverse - Standalone version for client implementation",
+  "description": "Prime Verse \u2014 professional multi-market trading & technical-analysis platform (Next.js 15).",
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint",
-    "start": "next start"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "latest",

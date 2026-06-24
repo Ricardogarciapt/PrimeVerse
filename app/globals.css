@@ -140,3 +140,34 @@
     animation: fadeInScale 1s ease-out forwards;
   }
 }
+
+/* Gonero brand fonts — add the .woff2 files to /public/fonts/ to activate.
+   Falls back to system fonts gracefully when absent. */
+@font-face {
+  font-family: "Gonero ExtExp Bolo";
+  src: url("/fonts/Gonero-ExtExp-Bolo.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gonero ExtExp Regular";
+  src: url("/fonts/Gonero-ExtExp-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gonero Bold Regular";
+  src: url("/fonts/Gonero-Bold-Regular.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gonero Thin Regular";
+  src: url("/fonts/Gonero-Thin-Regular.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}

@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Type checking is now enforced at build time (tsc passes clean).
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    // Don't fail production builds on lint warnings; run `npm run lint` separately.
+    ignoreDuringBuilds: true,
   },
   images: {
     unoptimized: false,
@@ -10,9 +15,10 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production" ? {
-      exclude: ["error", "warn"],
-    } : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 }
 
