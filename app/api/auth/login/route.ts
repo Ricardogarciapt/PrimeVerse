@@ -17,17 +17,17 @@ export async function POST(req: NextRequest) {
   try {
     payload = await req.json()
   } catch {
-    return NextResponse.json({ ok: false, error: "Pedido inválido." }, { status: 400 })
+    return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 })
   }
   const username = (payload.username || payload.email || "").trim()
   const password = payload.password || ""
   if (!username || !password) {
-    return NextResponse.json({ ok: false, error: "Introduz o utilizador e a password." }, { status: 400 })
+    return NextResponse.json({ ok: false, error: "Enter your username and password." }, { status: 400 })
   }
 
   const user = await validateHubLogin(username, password)
   if (!user) {
-    return NextResponse.json({ ok: false, error: "Credenciais inválidas." }, { status: 401 })
+    return NextResponse.json({ ok: false, error: "Invalid credentials." }, { status: 401 })
   }
 
   const res = NextResponse.json({ ok: true, user: { email: user.email, name: user.name } })

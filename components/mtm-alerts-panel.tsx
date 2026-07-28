@@ -44,25 +44,25 @@ type AssetClass = "gold_btc" | "forex" | "index" | "crypto_perp" | "other"
 type StateCat = "pending" | "active" | "win" | "loss" | "discarded"
 
 const CLASS_LABELS: Record<AssetClass, string> = {
-  gold_btc: "Ouro & BTC",
+  gold_btc: "Gold & BTC",
   forex: "Forex",
-  index: "Índices",
-  crypto_perp: "Cripto Perp",
-  other: "Outros",
+  index: "Indices",
+  crypto_perp: "Crypto Perp",
+  other: "Others",
 }
 
 const STATE_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pendente", className: "border-amber-500/40 bg-amber-500/10 text-amber-300" },
-  active: { label: "Ativa", className: "border-blue-500/40 bg-blue-500/10 text-blue-300" },
+  pending: { label: "Pending", className: "border-amber-500/40 bg-amber-500/10 text-amber-300" },
+  active: { label: "Active", className: "border-blue-500/40 bg-blue-500/10 text-blue-300" },
   be: { label: "BreakEven", className: "border-amber-500/40 bg-amber-500/10 text-amber-300" },
   exit_1: { label: "Exit 1", className: "border-green-500/40 bg-green-500/10 text-green-300" },
   exit_2: { label: "Exit 2", className: "border-green-500/40 bg-green-500/10 text-green-300" },
   exit_3: { label: "Exit 3", className: "border-green-500/40 bg-green-500/10 text-green-300" },
   exit_4: { label: "Exit 4", className: "border-green-600/50 bg-green-600/15 text-green-300" },
   loss: { label: "Loss", className: "border-red-500/40 bg-red-500/15 text-red-400" },
-  discarded: { label: "Descartado", className: "border-slate-500/40 bg-slate-500/10 text-slate-300" },
-  expired: { label: "Expirado", className: "border-slate-500/40 bg-slate-500/10 text-slate-400" },
-  closed: { label: "Fechada", className: "border-gray-500/40 bg-gray-500/10 text-gray-300" },
+  discarded: { label: "Discarded", className: "border-slate-500/40 bg-slate-500/10 text-slate-300" },
+  expired: { label: "Expired", className: "border-slate-500/40 bg-slate-500/10 text-slate-400" },
+  closed: { label: "Closed", className: "border-gray-500/40 bg-gray-500/10 text-gray-300" },
 }
 
 const FX_CODES = new Set(["EUR", "USD", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF"])
@@ -107,16 +107,16 @@ function timeAgo(iso?: string | null): string {
   const d = new Date(iso).getTime()
   if (!Number.isFinite(d)) return ""
   const s = Math.max(0, Math.floor((Date.now() - d) / 1000))
-  if (s < 60) return "agora"
+  if (s < 60) return "now"
   const m = Math.floor(s / 60)
-  if (m < 60) return `há ${m}min`
+  if (m < 60) return `${m}m ago`
   const h = Math.floor(m / 60)
-  if (h < 24) return `há ${h}h`
-  return `há ${Math.floor(h / 24)}d`
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
 }
 function fmt(n?: number | null): string {
   if (n == null || !Number.isFinite(n)) return "—"
-  return n.toLocaleString("pt-PT", { maximumFractionDigits: 6 })
+  return n.toLocaleString("en-US", { maximumFractionDigits: 6 })
 }
 const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined)
 
@@ -223,7 +223,7 @@ export default function MtmAlertsPanel({
       setAlerts(Array.isArray(data.alerts) ? data.alerts : [])
       setError(data.error ?? null)
     } catch {
-      setError("Falha ao carregar alertas")
+      setError("Failed to load alerts")
     } finally {
       setLoading(false)
     }
@@ -267,12 +267,12 @@ export default function MtmAlertsPanel({
   const clearFilters = () => setF({ ...DEFAULT_FILTERS })
 
   const STATE_TABS: { key: "all" | StateCat; label: string; count: number; active: string }[] = [
-    { key: "all", label: "Todos", count: perfBase.length, active: "border-[#015BF9] bg-[#015BF9]/15 text-[#5b9dff]" },
-    { key: "pending", label: "Pendentes", count: perf.pending, active: "border-amber-500 bg-amber-500/15 text-amber-300" },
-    { key: "active", label: "Ativas", count: perf.active, active: "border-blue-500 bg-blue-500/15 text-blue-300" },
+    { key: "all", label: "All", count: perfBase.length, active: "border-[#015BF9] bg-[#015BF9]/15 text-[#5b9dff]" },
+    { key: "pending", label: "Pending", count: perf.pending, active: "border-amber-500 bg-amber-500/15 text-amber-300" },
+    { key: "active", label: "Active", count: perf.active, active: "border-blue-500 bg-blue-500/15 text-blue-300" },
     { key: "win", label: "Wins", count: perf.win, active: "border-green-500 bg-green-500/15 text-green-300" },
     { key: "loss", label: "Loss", count: perf.loss, active: "border-red-500 bg-red-500/15 text-red-400" },
-    { key: "discarded", label: "Descartados", count: perf.discarded, active: "border-slate-500 bg-slate-500/15 text-slate-300" },
+    { key: "discarded", label: "Discarded", count: perf.discarded, active: "border-slate-500 bg-slate-500/15 text-slate-300" },
   ]
   const selectCls = "bg-gray-800 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 focus:outline-none focus:border-[#015BF9]"
 
@@ -286,7 +286,7 @@ export default function MtmAlertsPanel({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
           </span>
           <Bell className="w-4 h-4" style={{ color: PV.primary }} />
-          <h3 className="text-sm font-semibold text-white tracking-wide">Alertas ao Vivo</h3>
+          <h3 className="text-sm font-semibold text-white tracking-wide">Live Alerts</h3>
           <span className="rounded border border-green-500/30 bg-green-500/10 text-green-400 text-xs px-1.5 py-0.5">{visible.length}</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -299,16 +299,16 @@ export default function MtmAlertsPanel({
               }`}
               style={f.dir === d ? { backgroundColor: PV.primary } : undefined}
             >
-              {d === "all" ? "Todos" : d === "buy" ? "Compras" : "Vendas"}
+              {d === "all" ? "All" : d === "buy" ? "Buy" : "Sell"}
             </button>
           ))}
           <input
             value={f.search}
             onChange={(e) => set({ search: e.target.value })}
-            placeholder="Filtrar ativo"
+            placeholder="Filter symbol"
             className="w-28 bg-gray-800 border border-gray-700 text-white text-xs rounded-md px-2 py-1.5 focus:outline-none focus:border-[#015BF9]"
           />
-          <button onClick={load} className="p-1.5 rounded-md text-slate-300 border border-slate-600/40 hover:bg-white/5" title="Atualizar">
+          <button onClick={load} className="p-1.5 rounded-md text-slate-300 border border-slate-600/40 hover:bg-white/5" title="Refresh">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
@@ -317,20 +317,20 @@ export default function MtmAlertsPanel({
       {/* Filtros */}
       <div className="flex flex-wrap gap-2">
         <select value={f.classF} onChange={(e) => set({ classF: e.target.value as any })} className={selectCls}>
-          <option value="all">Todas as classes</option>
+          <option value="all">All classes</option>
           {(Object.keys(CLASS_LABELS) as AssetClass[]).map((k) => (<option key={k} value={k}>{CLASS_LABELS[k]}</option>))}
         </select>
         <select value={f.tf} onChange={(e) => set({ tf: e.target.value })} className={selectCls}>
-          <option value="all">Todos os timeframes</option>
+          <option value="all">All timeframes</option>
           {tfOptions.map((o) => (<option key={o} value={o}>{o}m</option>))}
         </select>
         <select value={f.strat} onChange={(e) => set({ strat: e.target.value })} className={selectCls}>
-          <option value="all">Todas as estratégias</option>
+          <option value="all">All strategies</option>
           {stratOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
         </select>
         {anyFilter && (
           <button onClick={clearFilters} className="text-xs text-slate-300 border border-slate-600/40 rounded-md px-2 py-1.5 hover:bg-white/5 flex items-center gap-1">
-            <X className="w-3 h-3" /> Limpar filtros
+            <X className="w-3 h-3" /> Clear filters
           </button>
         )}
       </div>
@@ -361,13 +361,13 @@ export default function MtmAlertsPanel({
 
       {/* Lista */}
       {loading && alerts.length === 0 ? (
-        <div className="py-10 text-center text-slate-400 text-sm">A carregar alertas…</div>
+        <div className="py-10 text-center text-slate-400 text-sm">Loading alerts…</div>
       ) : error && alerts.length === 0 ? (
         <div className="py-6 text-center text-red-300 text-sm">{error}</div>
       ) : visible.length === 0 ? (
         <div className="py-10 text-center text-slate-400 text-sm">
           <Bell className="w-5 h-5 mx-auto mb-2 opacity-60" />
-          Sem sinais para estes filtros. Os alertas dos scanners aparecem aqui em tempo real.
+          No signals for these filters. Scanner alerts appear here in real time.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 max-h-[80vh] overflow-y-auto pr-1">
@@ -385,7 +385,7 @@ export default function MtmAlertsPanel({
                     studyKey: strategyToStudy(p.strategy || a.alert_name),
                   })
                 }
-                title="Abrir no gráfico (símbolo, timeframe e scanner do sinal)"
+                title="Open in chart (signal symbol, timeframe and scanner)"
                 className="rounded-xl border bg-gradient-to-br from-[#141826] to-black p-4 flex flex-col gap-3 cursor-pointer transition-all hover:border-[#015BF9]/60 hover:ring-1 hover:ring-[#015BF9]/40"
                 style={{ borderColor: PV.border }}
               >
@@ -403,7 +403,7 @@ export default function MtmAlertsPanel({
                     d === "buy" ? "bg-green-500/15 text-green-400" : d === "sell" ? "bg-red-500/15 text-red-400" : "bg-slate-500/15 text-slate-300"
                   }`}>
                     {d === "buy" ? <ArrowUp className="w-3.5 h-3.5" /> : d === "sell" ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
-                    {d === "buy" ? "COMPRA" : d === "sell" ? "VENDA" : "NEUTRO"}
+                    {d === "buy" ? "BUY" : d === "sell" ? "SELL" : "NEUTRAL"}
                   </span>
                   {a.timeframe ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] border border-gray-600/50 text-gray-300">
@@ -431,8 +431,8 @@ export default function MtmAlertsPanel({
 
                 {/* Níveis: Entrada / SL / Exits */}
                 <div className="rounded-lg border border-white/5 bg-black/30 px-3 py-1.5">
-                  <LevelRow label="Entrada" value={p.entry} icon={<Pin className="w-3.5 h-3.5 text-[#5b9dff]" />} tone="text-white" />
-                  <LevelRow label="Invalidação (Stop Loss)" value={p.sl} icon={<Ban className="w-3.5 h-3.5 text-red-400" />} tone="text-red-300" />
+                  <LevelRow label="Entry" value={p.entry} icon={<Pin className="w-3.5 h-3.5 text-[#5b9dff]" />} tone="text-white" />
+                  <LevelRow label="Invalidation (Stop Loss)" value={p.sl} icon={<Ban className="w-3.5 h-3.5 text-red-400" />} tone="text-red-300" />
                   {p.tps.map((t, i) => (
                     <LevelRow key={i} label={`Exit ${i + 1} (Take Profit)`} value={t} icon={<Crosshair className="w-3.5 h-3.5 text-green-400" />} tone="text-green-300" />
                   ))}
@@ -442,10 +442,10 @@ export default function MtmAlertsPanel({
                 {(p.slPct != null || p.leverage != null || p.margin != null) && (
                   <div className="flex flex-wrap gap-1.5 text-[11px]">
                     {p.slPct != null && <span className="rounded bg-red-500/10 border border-red-500/30 text-red-300 px-1.5 py-0.5">🛑 SL {p.slPct.toFixed(2)}%</span>}
-                    {p.leverage != null && <span className="rounded bg-[#015BF9]/10 border border-[#015BF9]/30 text-[#5b9dff] px-1.5 py-0.5">⚡ Alav {p.leverage.toFixed(2)}x</span>}
+                    {p.leverage != null && <span className="rounded bg-[#015BF9]/10 border border-[#015BF9]/30 text-[#5b9dff] px-1.5 py-0.5">⚡ Lev {p.leverage.toFixed(2)}x</span>}
                     {(p.margin != null || p.notional != null) && (
                       <span className="rounded bg-white/5 border border-white/10 text-slate-300 px-1.5 py-0.5">
-                        💵 Margem ${p.margin != null ? Math.round(p.margin) : "—"} · Posição ${p.notional != null ? Math.round(p.notional) : "—"}
+                        💵 Margin ${p.margin != null ? Math.round(p.margin) : "—"} · Position ${p.notional != null ? Math.round(p.notional) : "—"}
                       </span>
                     )}
                   </div>
@@ -454,7 +454,7 @@ export default function MtmAlertsPanel({
                 {/* Confirmações */}
                 {p.confirmations.length > 0 && (
                   <div>
-                    <div className="text-[11px] text-slate-400 mb-1">Confirmações</div>
+                    <div className="text-[11px] text-slate-400 mb-1">Confirmations</div>
                     <div className="grid grid-cols-2 gap-1.5">
                       {p.confirmations.map(([name, val]) => {
                         const isBool = typeof val === "boolean"
@@ -483,7 +483,7 @@ export default function MtmAlertsPanel({
       )}
 
       <p className="text-[10px] text-slate-500 text-center">
-        ⚠️ Sinais educativos gerados pelos scanners. Não constituem aconselhamento financeiro.
+        ⚠️ Educational signals generated by the scanners. Not financial advice.
       </p>
     </div>
   )

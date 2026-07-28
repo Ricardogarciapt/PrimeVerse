@@ -148,10 +148,10 @@ export default function ChartsPrimeversePage() {
         setIsAuthenticated(true)
         setLoginPass("")
       } else {
-        setLoginError(data.error || "Credenciais inválidas.")
+        setLoginError(data.error || "Invalid credentials.")
       }
     } catch {
-      setLoginError("Falha de ligação. Tenta novamente.")
+      setLoginError("Connection failed. Try again.")
     } finally {
       setLoginSubmitting(false)
     }
@@ -180,11 +180,11 @@ export default function ChartsPrimeversePage() {
             <Image src="/images/image.png" alt="Prime Verse" width={200} height={44} className="h-10 w-auto" priority />
           </div>
           <div className="rounded-2xl border p-6 sm:p-8" style={{ backgroundColor: "#0A0E1A", borderColor: PRIMEVERSE_COLORS.primary + "30" }}>
-            <h1 className="text-xl font-semibold text-white">Bem-vindo de volta</h1>
-            <p className="text-sm text-slate-400 mb-6">Inicia sessão para continuar.</p>
+            <h1 className="text-xl font-semibold text-white">Welcome back</h1>
+            <p className="text-sm text-slate-400 mb-6">Sign in to continue.</p>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-300 mb-1.5">Utilizador ou email</label>
+                <label className="block text-xs text-slate-300 mb-1.5">Username or email</label>
                 <input
                   type="text"
                   autoComplete="username"
@@ -212,7 +212,7 @@ export default function ChartsPrimeversePage() {
                 className="w-full rounded-lg py-2.5 text-white text-sm font-semibold disabled:opacity-60"
                 style={{ background: `linear-gradient(90deg, ${PRIMEVERSE_COLORS.primary}, #6d3bf5)` }}
               >
-                {loginSubmitting ? "A entrar…" : "Entrar"}
+                {loginSubmitting ? "Signing in…" : "Sign in"}
               </button>
             </form>
             <div className="mt-4 text-center">
@@ -222,14 +222,14 @@ export default function ChartsPrimeversePage() {
                 rel="noopener noreferrer"
                 className="text-xs text-slate-400 hover:text-white"
               >
-                Esqueceste a password?
+                Forgot your password?
               </a>
             </div>
           </div>
           <p className="mt-6 text-center text-xs text-slate-500">
-            Ainda não tens conta?{" "}
+            Don't have an account yet?{" "}
             <a href={PRIMEVERSE_COMMUNITY_URL} target="_blank" rel="noopener noreferrer" className="text-[#5b9dff] hover:underline">
-              Junta-te ao PrimeVerse
+              Join PrimeVerse
             </a>
           </p>
         </div>
