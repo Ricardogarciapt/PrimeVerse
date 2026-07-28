@@ -17,6 +17,15 @@ import {
   Moon,
   Clock,
   X,
+  Target,
+  Activity,
+  Sparkles,
+  Coins,
+  DollarSign,
+  Bitcoin,
+  BarChart3,
+  TrendingUp,
+  RotateCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,8 +34,17 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Ordem explícita dos scanners (mantém a ordem dos botões)
-const scannerOrder = ["FreedomZone", "DirectEdge", "TruthSignal", "LibertyPoint", "SovereignSync"] as const
+// Ordem explícita dos scanners (mantém a ordem dos botões) — nomes/IDs MTM, cores PrimeVerse
+const scannerOrder = [
+  "GoldenZone",
+  "Momentum",
+  "AurumFlow",
+  "Winzone",
+  "Sinergy",
+  "Goldkiller",
+  "MTMScanner",
+  "Sensei",
+] as const
 
 type ScannerKey = (typeof scannerOrder)[number]
 
@@ -37,39 +55,46 @@ const debug = (...args: any[]) => {
   }
 }
 
-// Scanners disponíveis
+// Scanners disponíveis — nomes e IDs Pine IGUAIS ao scanner-access do MTM (scanner-mobile.tsx)
 const scannerStudies: Record<ScannerKey, string[]> = {
-  FreedomZone: ["PUB;0b373fb0e6634a73bc8b838cf0690725"],
-  DirectEdge: ["PUB;00ec48baf0ee43f0a43e1658bb54cdab", "PUB;38080827cf244587b5e7dbb9f272db0a"],
-  TruthSignal: [
+  GoldenZone: ["PUB;0b373fb0e6634a73bc8b838cf0690725"],
+  Momentum: ["PUB;00ec48baf0ee43f0a43e1658bb54cdab", "PUB;38080827cf244587b5e7dbb9f272db0a"],
+  AurumFlow: ["PUB;039b58f362ea4bbeb81867687c2fffd5"],
+  Winzone: [
     "PUB;6c003d30b2154ef3a31074d5c703954f",
     "PUB;e6adb5e5246c43f4a8dcffde5c98db4e",
     "PUB;162198dcae874d5da28f7b048feb76e7",
     "PUB;b6587ba7dc7b4489927cfd94d1fb8a9f",
     "PUB;0bf15eb0edba447f84e19fce69391ccb",
   ],
-  LibertyPoint: ["PUB;862506c546514212b9728a634dbc7152"],
-  SovereignSync: ["PUB;3b86bd1192124fd98583490bb7508041"],
+  Sinergy: ["PUB;3b86bd1192124fd98583490bb7508041"],
+  Goldkiller: ["PUB;a3eaa6af54de4202a2c2f807fd8baa08"],
+  MTMScanner: ["PUB;134fd950920e435694c40be33e3aa98f"],
+  Sensei: ["PUB;73e1daff8be44976998dade66c6a11d7"],
 }
 
+// Nomes visíveis = nomes MTM
 const scannerLabels: Record<ScannerKey, string> = {
-  FreedomZone: "Freedom Zone",
-  DirectEdge: "Direct Edge",
-  TruthSignal: "Truth Signal",
-  LibertyPoint: "Liberty Point",
-  SovereignSync: "Sovereign Sync",
+  GoldenZone: "Golden Zone",
+  Momentum: "Momentum",
+  AurumFlow: "Aurum Flow",
+  Winzone: "Sniper Pro",
+  Sinergy: "Quantum",
+  Goldkiller: "GoldKiller",
+  MTMScanner: "MTM",
+  Sensei: "Sensei",
 }
 
+// Ícones + gradientes (paleta PrimeVerse — azul elétrico / ciano / roxo)
 const scannerLogos: Record<ScannerKey, { icon: any; color: string; bgColor: string }> = {
-  FreedomZone: { icon: Crown, color: "text-gold-300", bgColor: "bg-gradient-to-r from-gold-500 to-yellow-400" },
-  DirectEdge: { icon: Waves, color: "text-blue-300", bgColor: "bg-gradient-to-r from-blue-600 to-cyan-500" },
-  TruthSignal: { icon: Shield, color: "text-blue-300", bgColor: "bg-gradient-to-r from-blue-700 to-sky-500" },
-  LibertyPoint: {
-    icon: AlertCircle,
-    color: "text-purple-300",
-    bgColor: "bg-gradient-to-r from-purple-600 to-fuchsia-500",
-  },
-  SovereignSync: { icon: Search, color: "text-cyan-300", bgColor: "bg-gradient-to-r from-cyan-600 to-teal-500" },
+  GoldenZone: { icon: Crown, color: "text-blue-200", bgColor: "bg-gradient-to-r from-[#015BF9] to-blue-400" },
+  Momentum: { icon: Waves, color: "text-cyan-200", bgColor: "bg-gradient-to-r from-cyan-500 to-sky-400" },
+  AurumFlow: { icon: Sparkles, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-indigo-500 to-blue-500" },
+  Winzone: { icon: Target, color: "text-violet-200", bgColor: "bg-gradient-to-r from-violet-600 to-purple-500" },
+  Sinergy: { icon: Search, color: "text-fuchsia-200", bgColor: "bg-gradient-to-r from-fuchsia-600 to-pink-500" },
+  Goldkiller: { icon: Shield, color: "text-blue-200", bgColor: "bg-gradient-to-r from-blue-700 to-indigo-600" },
+  MTMScanner: { icon: Activity, color: "text-teal-200", bgColor: "bg-gradient-to-r from-teal-500 to-cyan-500" },
+  Sensei: { icon: AlertCircle, color: "text-purple-200", bgColor: "bg-gradient-to-r from-purple-600 to-violet-500" },
 }
 
 // Categorias de ativos
@@ -176,6 +201,15 @@ const timeframes = [
   { value: "W", label: "1 week" },
 ]
 
+// Categorias com ícone (linha de botões — estilo scanner-mobile)
+const categoryMeta: Record<keyof typeof assetCategories, { icon: any; label: string }> = {
+  commodities: { icon: Coins, label: "Commodities" },
+  forex: { icon: DollarSign, label: "Forex" },
+  crypto: { icon: Bitcoin, label: "Crypto" },
+  indices: { icon: BarChart3, label: "Indices" },
+  stocks: { icon: TrendingUp, label: "Stocks" },
+}
+
 declare global {
   interface Window {
     TradingView?: any
@@ -191,7 +225,7 @@ interface SavedChart {
 }
 
 export default function TradingViewWidget({
-  scannerType = "FreedomZone",
+  scannerType = "GoldenZone",
   // Optional props for external control (used by the layout system)
   externalSymbol,
   externalTimeframe,
@@ -224,7 +258,10 @@ export default function TradingViewWidget({
   const [selectedStudies, setSelectedStudies] = useState<ScannerKey[]>(() => {
     if (externalStudies) return externalStudies
     const saved = localStorage.getItem("primeverse_active_scanners")
-    return saved ? JSON.parse(saved) : (["FreedomZone"] as ScannerKey[])
+    const parsed: ScannerKey[] = saved ? JSON.parse(saved) : []
+    // Sanitiza chaves antigas (nomes anteriores) — mantém só scanners válidos
+    const valid = parsed.filter((k) => (scannerOrder as readonly string[]).includes(k))
+    return valid.length ? valid : (["AurumFlow"] as ScannerKey[])
   })
   const [selectedSymbol, setSelectedSymbol] = useState(externalSymbol || "OANDA:XAUUSD")
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -235,7 +272,7 @@ export default function TradingViewWidget({
   const [favoriteTimeframe, setFavoriteTimeframe] = useState(() => {
     if (externalTimeframe) return externalTimeframe
     const saved = localStorage.getItem("primeverse_favorite_timeframe")
-    return saved || "60"
+    return saved || "15"
   })
 
   // Sincronizar com props externas quando mudarem
@@ -261,7 +298,12 @@ export default function TradingViewWidget({
   // Dropdown de ativos
   const [showAssetDropdown, setShowAssetDropdown] = useState(false)
   const [assetSearchTerm, setAssetSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<keyof typeof assetCategories>("forex")
+  // Categoria inicial = a que contém o símbolo selecionado (evita Select vazio no arranque)
+  const [selectedCategory, setSelectedCategory] = useState<keyof typeof assetCategories>(() => {
+    const cats = Object.keys(assetCategories) as Array<keyof typeof assetCategories>
+    const found = cats.find((c) => assetCategories[c].some((a) => a.value === (externalSymbol || "OANDA:XAUUSD")))
+    return found || "commodities"
+  })
 
   // Configurações
   const [showSettings, setShowSettings] = useState(false)
@@ -308,6 +350,13 @@ export default function TradingViewWidget({
     if (onSymbolChange) onSymbolChange(symbol)
     setShowAssetDropdown(false)
     setAssetSearchTerm("")
+  }
+
+  // Trocar de categoria seleciona o 1.º ativo dessa categoria (como no scanner-mobile)
+  const selectCategory = (cat: keyof typeof assetCategories) => {
+    setSelectedCategory(cat)
+    const first = assetCategories[cat][0]
+    if (first) handleSymbolSelect(first.value)
   }
 
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -422,6 +471,9 @@ export default function TradingViewWidget({
         usingExternal: !!externalStudies,
       })
 
+      // Config PURA do widget gratuito (tv.js) — todas as ferramentas/toolbars nativas ligadas.
+      // (enabled_features/disabled_features/overrides são da Charting Library paga; o widget
+      // gratuito ignora-os E a sua presença fazia a top bar nativa não aparecer.)
       const widgetOptions = {
         autosize: true,
         symbol: selectedSymbol,
@@ -433,70 +485,18 @@ export default function TradingViewWidget({
         toolbar_bg: theme === "dark" ? "#1E1E1E" : "#FFFFFF",
         enable_publishing: true,
         allow_symbol_change: true,
-        hide_side_toolbar: false,
+        hide_top_toolbar: false, // top bar (símbolo, timeframes, indicadores, settings, fullscreen)
         hide_legend: false,
+        hide_side_toolbar: false, // barra de desenho à esquerda
         withdateranges: true,
+        details: true,
+        calendar: true,
         save_image: true,
+        show_popup_button: true, // abrir em popup grande
+        popup_width: "1200",
+        popup_height: "700",
         container_id: "tradingview_widget",
         studies: studiesToApply,
-        disabled_features: [
-          "header_widget_dom_node",
-          "header_widget",
-          "volume_force_overlay",
-          "scanner-access",
-          "create_volume_indicator_by_default",
-          "volumePaneSize",
-          "tick_volume",
-        ],
-        enabled_features: [
-          "study_on_study",
-          "save_chart_properties_to_local_storage",
-          "use_localstorage_for_settings",
-          "header_screenshot",
-          "show_chart_property_page",
-          "property_pages",
-          "context_menus",
-          "control_bar",
-          "timeframes_toolbar",
-          "border_around_the_chart",
-          "header_chart_type",
-          "header_settings",
-          "header_indicators",
-          "header_compare",
-          "header_undo_redo",
-          "header_fullscreen_button",
-          "header_saveload",
-          "header_symbol_search",
-          "header_interval_dialog_button",
-          "header_resolutions",
-        ],
-        charts_storage_url: "https://saveload.tradingview.com",
-        charts_storage_api_version: "1.1",
-        client_id: "tradingview.com",
-        user_id: "public_user_id",
-        loading_screen: { backgroundColor: theme === "dark" ? "#1E1E1E" : "#FFFFFF", foregroundColor: "#f9b208" },
-        overrides: {
-          "mainSeriesProperties.showCountdown": true,
-          "scalesProperties.showSeriesLastValue": true,
-          // Esconder completamente legendas/valores/títulos dos estudos
-          "scalesProperties.showStudyLastValue": false,
-          "paneProperties.legendProperties.showStudyTitles": false,
-          "paneProperties.legendProperties.showStudyArguments": false,
-          "paneProperties.legendProperties.showStudyValues": false,
-          "paneProperties.legendProperties.showLegend": false,
-          "paneProperties.legendProperties.showSeriesTitle": false,
-          "paneProperties.legendProperties.showStudyTitle": false,
-          "paneProperties.legendProperties.showStudyPlotLabels": false,
-          "paneProperties.legendProperties.showStudyPlotNames": false,
-          "paneProperties.legendProperties.showStudyPlotValues": false,
-          "paneProperties.legendProperties.showStudyPlotTitles": false,
-          volumePaneSize: "hide",
-          // === PRICE SCALE ===
-          "scalesProperties.autoScale": true,
-          "scalesProperties.lockPriceToBarRatio": false,
-          "scalesProperties.scaleSeriesOnly": true,
-          "scalesProperties.invertScale": false,
-        },
       }
 
       widgetRef.current = new window.TradingView.widget(widgetOptions)
@@ -603,8 +603,8 @@ export default function TradingViewWidget({
       if (widgetRef.current?.remove) {
         try {
           widgetRef.current.remove()
-        } catch (e) {
-          console.error("Error removing widget:", e)
+        } catch {
+          /* widget já removido durante re-init — benigno */
         }
       }
     }
@@ -631,10 +631,7 @@ export default function TradingViewWidget({
 
   return (
     <>
-      <div
-        className="w-full relative bg-gray-900 border border-gold-500/30 rounded-lg overflow-hidden"
-        style={{ aspectRatio: "16/9" }}
-      >
+      <div className="w-full flex flex-col bg-gray-900 border border-[#015BF9]/30 rounded-lg overflow-hidden h-[70vh] lg:h-[calc(100vh-8rem)] min-h-[480px]">
         {error && (
           <Alert className="absolute top-2 left-2 right-2 z-20 bg-red-500/20 border-red-500">
             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -642,102 +639,96 @@ export default function TradingViewWidget({
           </Alert>
         )}
 
-        {/* Barra de controle superior */}
-        <div className="absolute top-0 left-0 right-0 z-30 bg-gray-800/95 backdrop-blur-sm py-2 px-3 border-b border-gold-500/30">
-          <div className="flex items-center justify-between gap-2">
-            {/* Asset Dropdown */}
-            <div className="relative">
-              <Button
-                onClick={() => setShowAssetDropdown(!showAssetDropdown)}
-                className="h-9 px-3 bg-gray-700/80 text-white hover:bg-gray-600/80 border border-gray-600/50 flex items-center gap-2"
-              >
-                <span className="text-sm font-medium">{selectedSymbol}</span>
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+        {/* Controls — replica os botões/dropdowns do scanner-mobile */}
+        <div className="bg-gray-900 border-b border-[#015BF9]/30 p-3 space-y-3 shrink-0">
+          {/* Linha 1 — Categorias */}
+          <div className="flex gap-2 pb-1 overflow-x-auto">
+            {(Object.keys(categoryMeta) as Array<keyof typeof assetCategories>).map((key) => {
+              const { icon: Icon, label } = categoryMeta[key]
+              const isSel = selectedCategory === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => selectCategory(key)}
+                  className={`flex items-center gap-2 rounded-lg whitespace-nowrap transition-all px-3 py-2 text-xs sm:text-sm ${
+                    isSel ? "bg-[#015BF9] text-white font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+          </div>
 
-              {showAssetDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-96 bg-gray-800 border border-gray-600 rounded-lg shadow-2xl z-50 max-h-[500px] overflow-hidden flex flex-col">
-                  {/* Campo de pesquisa */}
-                  <div className="p-3 border-b border-gray-700">
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        placeholder="Search asset..."
-                        value={assetSearchTerm}
-                        onChange={(e) => setAssetSearchTerm(e.target.value)}
-                        className="pl-8 bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
+          {/* Linha 2 — Símbolo + Intervalo */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+            <Select value={selectedSymbol} onValueChange={handleSymbolSelect}>
+              <SelectTrigger className="bg-gray-800 border-gray-700 text-white text-xs sm:text-sm h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white max-h-72">
+                {assetCategories[selectedCategory].map((s) => (
+                  <SelectItem key={s.value} value={s.value} className="text-xs sm:text-sm">
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                  {/* Categorias */}
-                  <div className="flex border-b border-gray-700">
-                    {(Object.keys(assetCategories) as Array<keyof typeof assetCategories>).map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-[#D2A63C] text-black"
-                            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                        }`}
-                      >
-                        {cat === "commodities" && "Commodities"}
-                        {cat === "forex" && "Forex"}
-                        {cat === "crypto" && "Crypto"}
-                        {cat === "indices" && "Indices"}
-                        {cat === "stocks" && "Stocks"}
-                      </button>
-                    ))}
-                  </div>
+            <Select value={favoriteTimeframe} onValueChange={handleTimeframeChange}>
+              <SelectTrigger className="bg-gray-800 border-gray-700 text-white text-xs sm:text-sm h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                {timeframes.map((tf) => (
+                  <SelectItem key={tf.value} value={tf.value} className="text-xs sm:text-sm">
+                    {tf.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                  {/* Lista de ativos */}
-                  <div className="overflow-y-auto flex-1">
-                    {popularAssets.length > 0 && (
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-gold-400 mb-2 px-2">Popular</div>
-                        <div className="grid grid-cols-2 gap-1">
-                          {popularAssets.map((asset) => (
-                            <button
-                              key={asset.value}
-                              onClick={() => handleSymbolSelect(asset.value)}
-                              className="px-3 py-2 text-left text-sm text-white bg-gray-700/50 hover:bg-[#D2A63C] hover:text-black rounded transition-colors"
-                            >
-                              {asset.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {otherAssets.length > 0 && (
-                      <div className="p-2">
-                        <div className="text-xs font-semibold text-gray-400 mb-2 px-2">Other</div>
-                        <div className="grid grid-cols-2 gap-1">
-                          {otherAssets.map((asset) => (
-                            <button
-                              key={asset.value}
-                              onClick={() => handleSymbolSelect(asset.value)}
-                              className="px-3 py-2 text-left text-sm text-gray-300 bg-gray-700/30 hover:bg-gray-600 rounded transition-colors"
-                            >
-                              {asset.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {filteredAssets.length === 0 && (
-                      <div className="p-8 text-center text-gray-400 text-sm">No assets found</div>
-                    )}
-                  </div>
-                </div>
-              )}
+            <div className="hidden lg:flex items-center rounded-md border border-gray-700 bg-gray-800 text-gray-400 text-xs px-3 font-medium tabular-nums">
+              {selectedSymbol}
             </div>
+          </div>
 
-            {/* Botões de ação */}
-            <div className="flex items-center gap-2">
+          {/* Linha 3 — Scanners */}
+          <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-[#015BF9]/50">
+            {scannerOrder
+              .filter((key) => !excludedStudies || !excludedStudies.includes(key))
+              .map((key) => {
+                const logo = scannerLogos[key]
+                const Icon = logo.icon
+                const isChecked = selectedStudies.includes(key)
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleStudy(key)}
+                    className={`transition-all duration-300 ${
+                      isChecked
+                        ? `${logo.bgColor} text-white shadow-lg scale-105`
+                        : "bg-gray-700/80 text-gray-300 hover:bg-gray-600/80"
+                    } border border-gray-600/50 rounded-md flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-[10px] sm:text-xs h-8 sm:h-9`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${isChecked ? "bg-white" : "bg-gray-400"}`} />
+                    <Icon className={`w-3 h-3 ${isChecked ? "text-white" : logo.color}`} />
+                    <span>{scannerLabels[key]}</span>
+                  </button>
+                )
+              })}
+          </div>
+
+          {/* Linha 4 — Ações */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleFullscreen}
+              size="sm"
+              className="flex-1 bg-[#015BF9] text-white hover:bg-[#1200DE] h-8 sm:h-9 text-xs sm:text-sm"
+            >
+              <Maximize2 className="w-3.5 h-3.5 mr-1.5" /> Fullscreen
+            </Button>
               {/* Configurações */}
               <Dialog open={showSettings} onOpenChange={setShowSettings}>
                 <DialogTrigger asChild>
@@ -747,7 +738,7 @@ export default function TradingViewWidget({
                 </DialogTrigger>
                 <DialogContent className="bg-gray-800 border-gray-600 text-white">
                   <DialogHeader>
-                    <DialogTitle className="text-[#D2A63C]">Chart Settings</DialogTitle>
+                    <DialogTitle className="text-[#015BF9]">Chart Settings</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-6 py-4">
                     {/* Tema */}
@@ -803,7 +794,7 @@ export default function TradingViewWidget({
                 </DialogTrigger>
                 <DialogContent className="bg-gray-800 border-gray-600 text-white">
                   <DialogHeader>
-                    <DialogTitle className="text-[#D2A63C]">Save Chart</DialogTitle>
+                    <DialogTitle className="text-[#015BF9]">Save Chart</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -825,7 +816,7 @@ export default function TradingViewWidget({
                     <div className="text-xs text-gray-400">Saved charts: {savedCharts.length}/20</div>
                     <Button
                       onClick={handleSaveChart}
-                      className="w-full bg-gradient-to-r from-[#D2A63C] to-[#BB8525] text-black hover:opacity-90"
+                      className="w-full bg-gradient-to-r from-[#015BF9] to-[#1200DE] text-white hover:opacity-90"
                     >
                       Save
                     </Button>
@@ -842,7 +833,7 @@ export default function TradingViewWidget({
                 </DialogTrigger>
                 <DialogContent className="bg-gray-800 border-gray-600 text-white max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-[#D2A63C]">Load Saved Chart</DialogTitle>
+                    <DialogTitle className="text-[#015BF9]">Load Saved Chart</DialogTitle>
                   </DialogHeader>
                   <div className="py-4 max-h-[400px] overflow-y-auto">
                     {savedCharts.length === 0 ? (
@@ -864,7 +855,7 @@ export default function TradingViewWidget({
                               <Button
                                 onClick={() => handleLoadChart(chart)}
                                 size="sm"
-                                className="bg-[#D2A63C] text-black hover:bg-[#BB8525]"
+                                className="bg-[#015BF9] text-white hover:bg-[#1200DE]"
                               >
                                 Load
                               </Button>
@@ -885,58 +876,30 @@ export default function TradingViewWidget({
                 </DialogContent>
               </Dialog>
 
-              {/* Fullscreen */}
-              <Button
-                onClick={handleFullscreen}
-                className="h-9 px-3 bg-gray-700/80 text-white hover:bg-gray-600/80"
-                title="Fullscreen"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Scanners */}
-          <div className="flex flex-nowrap gap-2 overflow-x-auto mt-2 pb-2 scrollbar-thin scrollbar-thumb-gold-500/50">
-            {scannerOrder
-              .filter((key) => !excludedStudies || !excludedStudies.includes(key))
-              .map((key) => {
-                const logo = scannerLogos[key]
-                const Icon = logo.icon
-                const isChecked = selectedStudies.includes(key)
-
-                return (
-                  <button
-                    key={key}
-                    onClick={() => toggleStudy(key)}
-                    className={`h-9 transition-all duration-300 transform hover:scale-105 ${
-                      isChecked
-                        ? `${logo.bgColor} text-white shadow-lg`
-                        : "bg-gray-700/80 text-gray-300 hover:bg-gray-600/80"
-                    } border border-gray-600/50 px-3 py-1 rounded-md flex items-center gap-2 text-xs whitespace-nowrap`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${isChecked ? "bg-white" : "bg-gray-400"}`} />
-                    <Icon className={`w-3 h-3 ${isChecked ? "text-white" : logo.color}`} />
-                    <span>{scannerLabels[key]}</span>
-                  </button>
-                )
-              })}
+            <Button
+              onClick={loadTradingViewWidget}
+              size="sm"
+              variant="outline"
+              className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700 h-8 sm:h-9 px-2 sm:px-3"
+              title="Refresh"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
 
-        {/* Widget container */}
-        <div className="w-full h-full pt-28" style={{ visibility: widgetLoaded ? "visible" : "hidden" }}>
-          <div ref={containerRef} className="w-full h-full" />
-        </div>
-
-        {!widgetLoaded && !error && (
-          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/70 z-10">
-            <div className="text-center">
-              <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-amber-400 font-medium">Loading TradingView...</p>
+        {/* Chart — ocupa o resto do espaço (desktop maximiza) */}
+        <div className="relative flex-1 min-h-0 bg-black">
+          <div ref={containerRef} className="w-full h-full" style={{ visibility: widgetLoaded ? "visible" : "hidden" }} />
+          {!widgetLoaded && !error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-[#015BF9] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-[#3b82f6] font-medium">Loading TradingView...</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
     </>

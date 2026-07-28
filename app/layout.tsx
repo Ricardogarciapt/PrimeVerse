@@ -1,19 +1,20 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import { Sora } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "../components/theme-provider"
 import { Toaster } from "../components/ui/toaster"
 import "./globals.css"
+
+// Fonte da marca PrimeVerse — geométrica moderna
+const sora = Sora({ subsets: ["latin"], display: "swap", variable: "--font-sora" })
 
 export const metadata: Metadata = {
   title: "Prime Verse - Professional Trading Platform",
   description:
     "Advanced technical analysis platform with multi-market scanners, real-time charting, and intelligent position sizing.",
   applicationName: "Prime Verse",
-  icons: {
-    icon: [{ url: "/images/favicon-20primeverse.png", type: "image/png" }],
-    apple: "/images/favicon-20primeverse.png",
-  },
+  // Favicon vem de app/icon.png (+ app/apple-icon.png) — convenção do Next App Router.
 }
 
 export const viewport: Viewport = {
@@ -24,7 +25,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={sora.variable}>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
