@@ -261,7 +261,9 @@ export default function TradingViewWidget({
     const parsed: ScannerKey[] = saved ? JSON.parse(saved) : []
     // Sanitiza chaves antigas (nomes anteriores) — mantém só scanners válidos
     const valid = parsed.filter((k) => (scannerOrder as readonly string[]).includes(k))
-    return valid.length ? valid : (["AurumFlow"] as ScannerKey[])
+    // Sem estudo por default (não forçar o Aurum Flow) — arranca com o gráfico de preço limpo;
+    // o utilizador escolhe os scanners que quer (podem estar vários ligados em simultâneo).
+    return valid
   })
   const [selectedSymbol, setSelectedSymbol] = useState(externalSymbol || "OANDA:XAUUSD")
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -512,6 +514,24 @@ export default function TradingViewWidget({
               if (typeof chart.resetData === "function") {
                 chart.resetData()
               }
+
+              // "Scale Price Chart Only" + "Auto" por DEFAULT: os estudos/scanners deixam de esticar
+              // a escala de preço e a escala fica em auto. Assim vários scanners ligados em simultâneo
+              // coexistem sem partir o gráfico de preço. (applyOverrides pode não existir no widget
+              // gratuito → defensivo; o loop abaixo é o fallback estudo-a-estudo.)
+              const scaleOverrides = {
+                "scalesProperties.scaleSeriesOnly": true,
+                "mainSeriesProperties.priceAxisProperties.autoScale": true,
+              }
+              try { widgetRef.current.applyOverrides?.(scaleOverrides) } catch { /* noop */ }
+              try { chart.applyOverrides?.(scaleOverrides) } catch { /* noop */ }
+              // Escala do próprio eixo de preço em auto + só a série (se a API existir).
+              try {
+                const priceScale = chart.getPanes?.()?.[0]?.getRightPriceScales?.()?.[0] ?? chart.getPriceScale?.("right")
+                priceScale?.setMode?.(0) // 0 = Normal/Auto
+                priceScale?.setAutoScale?.(true)
+                priceScale?.setSeriesOnly?.(true)
+              } catch { /* noop */ }
 
               // Configurar todos os estudos para usar AUTO e apenas escala de preço
               setTimeout(() => {
