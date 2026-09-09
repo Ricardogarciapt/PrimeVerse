@@ -179,3 +179,61 @@ export async function validateMightyToken(token: string): Promise<{ id: string; 
     return null
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * ACESSO A PARTIR DE DENTRO DA PRIMEVERSE
+ *
+ * Quem chega aos gráficos vem de dentro da comunidade — a página é aberta lá,
+ * normalmente dentro de um iframe. Pedir outra vez utilizador e palavra-passe a
+ * quem já fez login no hub é atrito puro, e ainda por cima obrigava-nos a
+ * receber a palavra-passe do hub no nosso servidor.
+ *
+ * A decisão é tomada no PEDIDO DO DOCUMENTO, não por cookie. Dentro de um
+ * iframe de outro domínio o nosso cookie é de terceiros: o Safari bloqueia-o e
+ * o Chrome está a caminho do mesmo. Um pedido que chega emoldurado pelo hub é
+ * reconhecido em cada carregamento, e não há sessão para se perder.
+ *
+ * O QUE ISTO É E O QUE NÃO É: é um portão de INTERFACE — decide quem vê a
+ * página. Não protege dados: `/api/alerts` já é público e continua a sê-lo.
+ * `Referer` é falsificável por quem se der ao trabalho. Para apertar, define
+ * PRIMEVERSE_EMBED_KEY e publica o embed com `?k=<chave>`: passa a ser preciso
+ * saber a chave, que só quem está na comunidade vê.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Origens que contam como "dentro da PrimeVerse". */
+export function getEmbedOrigins(): string[] {
+  const extra = (process.env.PRIMEVERSE_EMBED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim().replace(/\/+$/, ""))
+    .filter(Boolean)
+  return Array.from(new Set([getHubUrl(), "https://prime-verse.mn.co", ...extra]))
+}
+
+function originOf(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    return new URL(url).origin
+  } catch {
+    return null
+  }
+}
+
+export type EmbedCheck = { allowed: boolean; reason: "key" | "referer" | "none" }
+
+/**
+ * O pedido vem de dentro da PrimeVerse?
+ *
+ * Duas maneiras, e basta uma:
+ *  · a chave de embed (quando PRIMEVERSE_EMBED_KEY está definida) — o sinal forte;
+ *  · o `Referer` do documento aponta para uma origem do hub, esteja em iframe ou
+ *    aberto num separador novo a partir de lá.
+ */
+export function checkPrimeverseEmbed(headers: Headers, searchParams?: URLSearchParams): EmbedCheck {
+  const chave = (process.env.PRIMEVERSE_EMBED_KEY || "").trim()
+  if (chave && searchParams?.get("k")?.trim() === chave) return { allowed: true, reason: "key" }
+
+  const ref = originOf(headers.get("referer"))
+  if (ref && getEmbedOrigins().includes(ref)) return { allowed: true, reason: "referer" }
+
+  return { allowed: false, reason: "none" }
+}
