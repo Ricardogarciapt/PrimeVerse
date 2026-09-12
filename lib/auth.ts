@@ -237,3 +237,82 @@ export function checkPrimeverseEmbed(headers: Headers, searchParams?: URLSearchP
 
   return { allowed: false, reason: "none" }
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SESSÃO DO HUB — a verificação a sério.
+ *
+ * O `Referer` prova de ONDE a pessoa veio, não que ela ESTÁ dentro. Quem colar o
+ * link dos gráficos numa página da comunidade abre-os sem nunca ter entrado, e
+ * quem abrir os gráficos a partir de um marcador não entra apesar de ter sessão
+ * aberta no hub há uma semana. As duas coisas estão erradas pela mesma razão:
+ * estávamos a medir a proveniência do clique em vez do estado da pessoa.
+ *
+ * Isto pergunta ao hub. Os cookies que chegam ao nosso pedido são reenviados ao
+ * `/api/auth/me` da comunidade, e é o hub que diz se aquela sessão existe. Não
+ * há password pelo meio — nem nossa, nem dele.
+ *
+ * ── o que é preciso para funcionar ──────────────────────────────────────────
+ *
+ * O cookie de sessão do hub tem de ser visível a este domínio, ou seja estar
+ * assente em `.primeverse.ca` e não só em `hub.primeverse.ca`. Sendo irmãos, é
+ * uma linha na configuração do hub. Se não estiver, esta função devolve `null`
+ * sem se queixar e o portão cai no `Referer` de antes — degrada, não parte.
+ *
+ * DENTRO DE UM IFRAME de outro domínio (mn.co), os cookies de `primeverse.ca`
+ * são de terceiros e o Safari bloqueia-os. Aí só o `Referer` resta, e é bom que
+ * reste: é precisamente o caso em que ele diz a verdade.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Cookies que valem a pena reenviar — a sessão do hub, não o que for nosso. */
+function cookiesParaOHub(cabecalho: string | null): string {
+  if (!cabecalho) return ""
+  return cabecalho
+    .split(";")
+    .map((c) => c.trim())
+    .filter((c) => c && !c.startsWith(`${SESSION_COOKIE}=`))
+    .join("; ")
+}
+
+/**
+ * Há uma sessão aberta na PrimeVerse? Devolve quem, ou `null`.
+ *
+ * Falha em silêncio de propósito: o hub estar em baixo não pode fechar os
+ * gráficos a quem tem direito a vê-los. Quem não passar aqui ainda tem o
+ * `Referer` pela frente.
+ */
+export async function sessaoDoHub(headers: Headers): Promise<HubUser | null> {
+  const cookie = cookiesParaOHub(headers.get("cookie"))
+  const auth = headers.get("authorization")
+  if (!cookie && !auth) return null
+
+  const ctrl = new AbortController()
+  // Três segundos: isto corre no caminho de renderização da página, e uma
+  // espera longa por um hub lento é uma página em branco para toda a gente.
+  const timer = setTimeout(() => ctrl.abort(), 3000)
+  try {
+    const res = await fetch(`${getHubUrl()}/api/auth/me`, {
+      headers: {
+        Accept: "application/json",
+        ...(cookie ? { Cookie: cookie } : {}),
+        ...(auth ? { Authorization: auth } : {}),
+      },
+      cache: "no-store",
+      signal: ctrl.signal,
+    })
+    if (!res.ok) return null
+    const dados = (await res.json()) as Record<string, unknown>
+    const u = (dados.user ?? dados) as Record<string, unknown>
+    const id = u.id ?? u._id ?? u.email
+    if (!id) return null
+    return {
+      id: String(id),
+      email: typeof u.email === "string" ? u.email : undefined,
+      name: (u.name || u.username || u.fullName) as string | undefined,
+      role: typeof u.role === "string" ? u.role : undefined,
+    }
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
