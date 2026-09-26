@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "../../components/ui/button"
 import TradingViewWidget from "../../components/trading-view-widget"
@@ -8,6 +9,8 @@ import PositionCalculatorEN from "../../components/position-calculator-en"
 import MtmAlertsPanel from "../../components/mtm-alerts-panel"
 import { Loader2, LogOut, Sun, Moon, Users } from "lucide-react"
 import Image from "next/image"
+import EmbedHeightReporter from "../../components/embed-height-reporter"
+import { lerModoEmbed } from "../../lib/embed"
 
 // Primeverse color palette (ref. hub.primeverse.ca)
 const PRIMEVERSE_COLORS = {
@@ -45,6 +48,9 @@ const debug = (...args: any[]) => {
  */
 export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean }) {
   const { resolvedTheme, setTheme } = useTheme()
+  const searchParams = useSearchParams()
+  // ?embed=1 (ou ?chrome=0) → sem cabeçalho nosso; &panels=1 traz os painéis de volta.
+  const { embutido, painéis } = lerModoEmbed(searchParams)
   const [mounted, setMounted] = useState(false)
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["AurumFlow"])
   const [selectedSymbol, setSelectedSymbol] = useState("OANDA:XAUUSD")
@@ -105,7 +111,22 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: PRIMEVERSE_COLORS.dark, color: PRIMEVERSE_COLORS.white }}>
+    <div
+      className={
+        embutido
+          ? painéis
+            ? // Com painéis a altura vem do CONTEÚDO e é o pai que segue. Nada de `dvh` aqui:
+              // dentro do iframe `100dvh` é a altura do iframe, e crescê-la realimentava-se.
+              "flex flex-col"
+            : // Sem painéis o embed é uma só folha da altura do iframe: os controlos e o
+              // gráfico cabem todos, e não há scroll dentro do iframe para chegar a eles.
+              "h-[100dvh] min-h-[600px] overflow-hidden flex flex-col"
+          : "min-h-screen"
+      }
+      style={{ backgroundColor: PRIMEVERSE_COLORS.dark, color: PRIMEVERSE_COLORS.white }}
+    >
+      {embutido && <EmbedHeightReporter />}
+      {!embutido && (
       <header
         className="border-b sticky top-0 z-50 backdrop-blur-sm"
         style={{ backgroundColor: PRIMEVERSE_COLORS.dark + "F0", borderColor: PRIMEVERSE_COLORS.primary + "30" }}
@@ -159,13 +180,31 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
           </div>
         </div>
       </header>
+      )}
 
       {/* Desktop aproveita o ecrã todo (w-full, padding mínimo); mobile empilha */}
-      <div className="w-full px-2 sm:px-3 lg:px-4 py-3">
-        {/* Chart — ocupa o máximo de altura no desktop */}
+      <div
+        className={
+          embutido
+            ? "w-full flex-1 min-h-0 flex flex-col px-1.5 sm:px-2 py-1.5 gap-3"
+            : "w-full px-2 sm:px-3 lg:px-4 py-3"
+        }
+      >
+        {/* Chart — no embed come a altura útil toda; fora dele mantém a moldura */}
         <div
-          className="w-full rounded-lg border p-1.5 sm:p-2 mb-4"
-          style={{ backgroundColor: PRIMEVERSE_COLORS.dark, borderColor: PRIMEVERSE_COLORS.primary + "20" }}
+          className={
+            embutido
+              ? painéis
+                ? // Com painéis a página cresce e o pai segue-a: a altura do gráfico TEM de ser
+                  // em px. Em `vh` entrava em ciclo — o iframe crescia, o `vh` crescia com ele.
+                  "w-full h-[440px] sm:h-[560px] lg:h-[640px]"
+                : "w-full flex-1 min-h-0"
+              : "w-full rounded-lg border p-1.5 sm:p-2 mb-4"
+          }
+          style={{
+            backgroundColor: PRIMEVERSE_COLORS.dark,
+            borderColor: embutido ? undefined : PRIMEVERSE_COLORS.primary + "20",
+          }}
         >
           <TradingViewWidget
             externalStudies={selectedStudies as any}
@@ -173,21 +212,26 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
             externalTimeframe={selectedTimeframe}
             externalTheme={resolvedTheme === "light" ? "light" : "dark"}
             excludedStudies={[] as string[]}
+            fillParent={embutido}
             onStudiesChange={handleStudiesChange}
             onSymbolChange={setSelectedSymbol}
             onTimeframeChange={setSelectedTimeframe}
           />
         </div>
 
-        {/* Alertas (espelho dos alertas MoreThanMoney) */}
-        <div className="w-full mb-4">
-          <MtmAlertsPanel onSelectAlert={handleSelectAlert} />
-        </div>
+        {painéis && (
+          <>
+            {/* Alertas (espelho dos alertas MoreThanMoney) */}
+            <div className="w-full mb-4">
+              <MtmAlertsPanel onSelectAlert={handleSelectAlert} />
+            </div>
 
-        {/* Calculadora de posição */}
-        <div className="w-full">
-          <PositionCalculatorEN />
-        </div>
+            {/* Calculadora de posição */}
+            <div className="w-full">
+              <PositionCalculatorEN />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

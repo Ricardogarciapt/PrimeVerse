@@ -370,7 +370,7 @@ export default function MtmAlertsPanel({
           No signals for these filters. Scanner alerts appear here in real time.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 max-h-[80vh] overflow-y-auto pr-1">
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3 max-h-[720px] overflow-y-auto pr-1">
           {visible.map((a) => {
             const d = dirOf(a)
             const st = stateMeta(a.trade_status)

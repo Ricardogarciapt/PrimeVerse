@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import FilaDeslizante from "@/components/fila-deslizante"
 
 // Ordem explícita dos scanners (mantém a ordem dos botões) — nomes/IDs MTM, cores PrimeVerse
 const scannerOrder = [
@@ -232,6 +233,7 @@ export default function TradingViewWidget({
   externalTheme,
   externalStudies,
   excludedStudies,
+  fillParent = false,
   onSymbolChange,
   onTimeframeChange,
   onThemeChange,
@@ -243,6 +245,8 @@ export default function TradingViewWidget({
   externalTheme?: "light" | "dark"
   externalStudies?: ScannerKey[]
   excludedStudies?: string[]
+  /** No modo embed a altura vem do pai: o widget enche o contentor em vez de usar vh. */
+  fillParent?: boolean
   onSymbolChange?: (symbol: string) => void
   onTimeframeChange?: (timeframe: string) => void
   onThemeChange?: (theme: "light" | "dark") => void
@@ -651,7 +655,15 @@ export default function TradingViewWidget({
 
   return (
     <>
-      <div className="w-full flex flex-col bg-gray-900 border border-[#015BF9]/30 rounded-lg overflow-hidden h-[70vh] lg:h-[calc(100vh-8rem)] min-h-[480px]">
+      <div
+        className={`w-full flex flex-col bg-gray-900 border border-[#015BF9]/30 rounded-lg overflow-hidden ${
+          fillParent
+            ? // Dentro de um iframe `vh` é a altura do iframe e não a do ecrã: quem manda na
+              // altura é o contentor, e o mínimo garante um gráfico legível em telefones.
+              "h-full min-h-[320px]"
+            : "h-[70vh] lg:h-[calc(100vh-8rem)] min-h-[480px]"
+        }`}
+      >
         {error && (
           <Alert className="absolute top-2 left-2 right-2 z-20 bg-red-500/20 border-red-500">
             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -660,9 +672,13 @@ export default function TradingViewWidget({
         )}
 
         {/* Controls — replica os botões/dropdowns do scanner-mobile */}
-        <div className="bg-gray-900 border-b border-[#015BF9]/30 p-3 space-y-3 shrink-0">
+        <div
+          className={`bg-gray-900 border-b border-[#015BF9]/30 shrink-0 ${
+            fillParent ? "p-2 space-y-2" : "p-3 space-y-3"
+          }`}
+        >
           {/* Linha 1 — Categorias */}
-          <div className="flex gap-2 pb-1 overflow-x-auto">
+          <FilaDeslizante className="gap-2">
             {(Object.keys(categoryMeta) as Array<keyof typeof assetCategories>).map((key) => {
               const { icon: Icon, label } = categoryMeta[key]
               const isSel = selectedCategory === key
@@ -670,7 +686,7 @@ export default function TradingViewWidget({
                 <button
                   key={key}
                   onClick={() => selectCategory(key)}
-                  className={`flex items-center gap-2 rounded-lg whitespace-nowrap transition-all px-3 py-2 text-xs sm:text-sm ${
+                  className={`flex shrink-0 items-center gap-2 rounded-lg whitespace-nowrap transition-all px-3 py-2 text-xs sm:text-sm ${
                     isSel ? "bg-[#015BF9] text-white font-semibold" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
                 >
@@ -679,7 +695,7 @@ export default function TradingViewWidget({
                 </button>
               )
             })}
-          </div>
+          </FilaDeslizante>
 
           {/* Linha 2 — Símbolo + Intervalo */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
@@ -715,7 +731,7 @@ export default function TradingViewWidget({
           </div>
 
           {/* Linha 3 — Scanners */}
-          <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-[#015BF9]/50">
+          <FilaDeslizante className="flex-nowrap gap-1.5">
             {scannerOrder
               .filter((key) => !excludedStudies || !excludedStudies.includes(key))
               .map((key) => {
@@ -730,7 +746,7 @@ export default function TradingViewWidget({
                       isChecked
                         ? `${logo.bgColor} text-white shadow-lg scale-105`
                         : "bg-gray-700/80 text-gray-300 hover:bg-gray-600/80"
-                    } border border-gray-600/50 rounded-md flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-[10px] sm:text-xs h-8 sm:h-9`}
+                    } border border-gray-600/50 rounded-md flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-[10px] sm:text-xs h-8 sm:h-9`}
                   >
                     <div className={`w-1.5 h-1.5 rounded-full ${isChecked ? "bg-white" : "bg-gray-400"}`} />
                     <Icon className={`w-3 h-3 ${isChecked ? "text-white" : logo.color}`} />
@@ -738,7 +754,7 @@ export default function TradingViewWidget({
                   </button>
                 )
               })}
-          </div>
+          </FilaDeslizante>
 
           {/* Linha 4 — Ações */}
           <div className="flex items-center gap-2">
