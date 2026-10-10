@@ -61,6 +61,7 @@ const scannerStudies: Record<ScannerKey, string[]> = {
   GoldenZone: ["PUB;0b373fb0e6634a73bc8b838cf0690725"],
   Momentum: ["PUB;00ec48baf0ee43f0a43e1658bb54cdab", "PUB;38080827cf244587b5e7dbb9f272db0a"],
   AurumFlow: ["PUB;4ca56ac1162a401cb62fa3205c73366a"],
+  TrendShot: ["PUB;be1c60d3c15249e4b609bb40a4412d1f"],
   Winzone: [
     "PUB;6c003d30b2154ef3a31074d5c703954f",
     "PUB;e6adb5e5246c43f4a8dcffde5c98db4e",
@@ -79,6 +80,7 @@ const scannerLabels: Record<ScannerKey, string> = {
   GoldenZone: "Golden Zone",
   Momentum: "Momentum",
   AurumFlow: "Aurum Flow",
+  TrendShot: "TrendShot:",
   Winzone: "Sniper Pro",
   Sinergy: "Quantum",
   Goldkiller: "GoldKiller",
@@ -91,6 +93,7 @@ const scannerLogos: Record<ScannerKey, { icon: any; color: string; bgColor: stri
   GoldenZone: { icon: Crown, color: "text-blue-200", bgColor: "bg-gradient-to-r from-[#015BF9] to-blue-400" },
   Momentum: { icon: Waves, color: "text-cyan-200", bgColor: "bg-gradient-to-r from-cyan-500 to-sky-400" },
   AurumFlow: { icon: Sparkles, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-indigo-500 to-blue-500" },
+  TrendShot: { icon: Skull, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-indigo-500 to-blue-500" },
   Winzone: { icon: Target, color: "text-violet-200", bgColor: "bg-gradient-to-r from-violet-600 to-purple-500" },
   Sinergy: { icon: Search, color: "text-fuchsia-200", bgColor: "bg-gradient-to-r from-fuchsia-600 to-pink-500" },
   Goldkiller: { icon: Shield, color: "text-blue-200", bgColor: "bg-gradient-to-r from-blue-700 to-indigo-600" },
