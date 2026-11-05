@@ -93,7 +93,6 @@ function classifyAsset(rawTicker?: string | null): AssetClass {
 
 function stateCategory(s?: string | null): StateCat {
   const v = (s || "").toLowerCase()
-  if (v.includes("aurum")) return "AurumFlow"
   if (v === "pending") return "pending"
   if (v === "discarded" || v === "expired") return "discarded" // SL antes de ativar / expirou → não é loss
   if (v === "loss") return "loss"
@@ -181,6 +180,7 @@ function tvSymbolFor(ticker?: string | null, exchange?: string | null): string {
 // Estratégia do sinal → chave de study/scanner do widget
 function strategyToStudy(s?: string | null): string {
   const v = (s || "").toLowerCase()
+  if (v.includes("aurum")) return "AurumFlow"
   if (v.includes("defy")) return "Defy"
   if (v.includes("premium")) return "PremiumScanner"
   if (v.includes("goldkiller") || v.includes("gold killer")) return "Goldkiller"
