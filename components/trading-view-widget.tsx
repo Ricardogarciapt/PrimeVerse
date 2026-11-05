@@ -506,8 +506,10 @@ export default function TradingViewWidget({
         hide_legend: false,
         hide_side_toolbar: false, // barra de desenho à esquerda
         withdateranges: true,
-        details: true,
-        calendar: true,
+        // No embed (fillParent) os painéis laterais de detalhes/calendário roubam metade da
+        // largura a um gráfico que já é pequeno; ficam só na página completa.
+        details: !fillParent,
+        calendar: !fillParent,
         save_image: true,
         show_popup_button: true, // abrir em popup grande
         popup_width: "1200",
@@ -652,7 +654,7 @@ export default function TradingViewWidget({
       } catch (e) {}
     }
     loadTradingViewWidget()
-  }, [selectedStudies, selectedSymbol, theme, favoriteTimeframe])
+  }, [selectedStudies, selectedSymbol, theme, favoriteTimeframe, fillParent])
 
   // Filtrar ativos por categoria e busca
   const filteredAssets = assetCategories[selectedCategory].filter(
