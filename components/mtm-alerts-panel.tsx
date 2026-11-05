@@ -180,7 +180,8 @@ function tvSymbolFor(ticker?: string | null, exchange?: string | null): string {
 // Estratégia do sinal → chave de study/scanner do widget
 function strategyToStudy(s?: string | null): string {
   const v = (s || "").toLowerCase()
-  if (v.includes("aurum")) return "AurumFlow"
+  if (v.includes("defy")) return "Defy"
+  if (v.includes("premium")) return "PremiumScanner"
   if (v.includes("goldkiller") || v.includes("gold killer")) return "Goldkiller"
   if (v.includes("sensei")) return "Sensei"
   if (v.includes("golden")) return "GoldenZone"
@@ -220,7 +221,9 @@ export default function MtmAlertsPanel({
     try {
       const res = await fetch("/api/alerts?limit=100", { cache: "no-store" })
       const data = (await res.json()) as { alerts?: Alert[]; error?: string }
-      setAlerts(Array.isArray(data.alerts) ? data.alerts : [])
+      // Aurum Flow saiu da PrimeVerse (05/11/2026): os alertas dela não aparecem aqui.
+      const lista = Array.isArray(data.alerts) ? data.alerts : []
+      setAlerts(lista.filter((a) => !/aurum/i.test(`${params(a).strategy ?? ""} ${a.alert_name ?? ""}`)))
       setError(data.error ?? null)
     } catch {
       setError("Failed to load alerts")

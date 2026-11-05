@@ -29,12 +29,14 @@ const PRIMEVERSE_COMMUNITY_URL = "https://hub.primeverse.ca"
 const availableStudies = [
   "GoldenZone",
   "Momentum",
-  "AurumFlow",
+  "TrendShot",
   "Winzone",
   "Sinergy",
   "Goldkiller",
   "MTMScanner",
   "Sensei",
+  "PremiumScanner",
+  "Defy",
 ] as const
 type StudyKey = (typeof availableStudies)[number]
 
@@ -52,7 +54,7 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   // ?embed=1 (ou ?chrome=0) → sem cabeçalho nosso; &panels=1 traz os painéis de volta.
   const { embutido, painéis } = lerModoEmbed(searchParams)
   const [mounted, setMounted] = useState(false)
-  const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["AurumFlow"])
+  const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["MTMScanner"])
   const [selectedSymbol, setSelectedSymbol] = useState("OANDA:XAUUSD")
   const [selectedTimeframe, setSelectedTimeframe] = useState("15")
 
@@ -73,7 +75,7 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
 
   const handleStudiesChange = useCallback((studies: string[]) => {
     const filtered = studies.filter((s) => availableStudies.includes(s as StudyKey)) as StudyKey[]
-    setSelectedStudies(filtered.length > 0 ? filtered : ["AurumFlow"])
+    setSelectedStudies(filtered.length > 0 ? filtered : ["MTMScanner"])
   }, [])
 
   // Click num alerta → encaminha o gráfico para o símbolo, timeframe e scanner do sinal
