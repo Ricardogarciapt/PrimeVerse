@@ -26,6 +26,9 @@ import {
   BarChart3,
   TrendingUp,
   RotateCw,
+  Gem,
+  Flame,
+  Skull,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,12 +42,14 @@ import FilaDeslizante from "@/components/fila-deslizante"
 const scannerOrder = [
   "GoldenZone",
   "Momentum",
-  "AurumFlow",
+  "TrendShot",
   "Winzone",
   "Sinergy",
   "Goldkiller",
   "MTMScanner",
   "Sensei",
+  "PremiumScanner",
+  "Defy",
 ] as const
 
 type ScannerKey = (typeof scannerOrder)[number]
@@ -60,7 +65,6 @@ const debug = (...args: any[]) => {
 const scannerStudies: Record<ScannerKey, string[]> = {
   GoldenZone: ["PUB;0b373fb0e6634a73bc8b838cf0690725"],
   Momentum: ["PUB;00ec48baf0ee43f0a43e1658bb54cdab", "PUB;38080827cf244587b5e7dbb9f272db0a"],
-  AurumFlow: ["PUB;4ca56ac1162a401cb62fa3205c73366a"],
   TrendShot: ["PUB;be1c60d3c15249e4b609bb40a4412d1f"],
   Winzone: [
     "PUB;6c003d30b2154ef3a31074d5c703954f",
@@ -73,32 +77,36 @@ const scannerStudies: Record<ScannerKey, string[]> = {
   Goldkiller: ["PUB;a3eaa6af54de4202a2c2f807fd8baa08"],
   MTMScanner: ["PUB;134fd950920e435694c40be33e3aa98f"],
   Sensei: ["PUB;73e1daff8be44976998dade66c6a11d7"],
+  PremiumScanner: ["PUB;37deee45abee4dcea91b381f3c4d10b9"],
+  Defy: ["PUB;1dc8e6e75c9649dd952ddaeedabe6835"],
 }
 
 // Nomes visíveis = nomes MTM
 const scannerLabels: Record<ScannerKey, string> = {
   GoldenZone: "Golden Zone",
   Momentum: "Momentum",
-  AurumFlow: "Aurum Flow",
-  TrendShot: "TrendShot:",
+  TrendShot: "TrendShot",
   Winzone: "Sniper Pro",
   Sinergy: "Quantum",
   Goldkiller: "GoldKiller",
   MTMScanner: "MTM",
   Sensei: "Sensei",
+  PremiumScanner: "Premium Scanner",
+  Defy: "DEFY",
 }
 
 // Ícones + gradientes (paleta PrimeVerse — azul elétrico / ciano / roxo)
 const scannerLogos: Record<ScannerKey, { icon: any; color: string; bgColor: string }> = {
   GoldenZone: { icon: Crown, color: "text-blue-200", bgColor: "bg-gradient-to-r from-[#015BF9] to-blue-400" },
   Momentum: { icon: Waves, color: "text-cyan-200", bgColor: "bg-gradient-to-r from-cyan-500 to-sky-400" },
-  AurumFlow: { icon: Sparkles, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-indigo-500 to-blue-500" },
   TrendShot: { icon: Skull, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-indigo-500 to-blue-500" },
   Winzone: { icon: Target, color: "text-violet-200", bgColor: "bg-gradient-to-r from-violet-600 to-purple-500" },
   Sinergy: { icon: Search, color: "text-fuchsia-200", bgColor: "bg-gradient-to-r from-fuchsia-600 to-pink-500" },
   Goldkiller: { icon: Shield, color: "text-blue-200", bgColor: "bg-gradient-to-r from-blue-700 to-indigo-600" },
   MTMScanner: { icon: Activity, color: "text-teal-200", bgColor: "bg-gradient-to-r from-teal-500 to-cyan-500" },
   Sensei: { icon: AlertCircle, color: "text-purple-200", bgColor: "bg-gradient-to-r from-purple-600 to-violet-500" },
+  PremiumScanner: { icon: Gem, color: "text-sky-200", bgColor: "bg-gradient-to-r from-[#015BF9] to-cyan-400" },
+  Defy: { icon: Flame, color: "text-indigo-200", bgColor: "bg-gradient-to-r from-[#1200DE] to-[#015BF9]" },
 }
 
 // Categorias de ativos
@@ -268,7 +276,7 @@ export default function TradingViewWidget({
     const parsed: ScannerKey[] = saved ? JSON.parse(saved) : []
     // Sanitiza chaves antigas (nomes anteriores) — mantém só scanners válidos
     const valid = parsed.filter((k) => (scannerOrder as readonly string[]).includes(k))
-    // Sem estudo por default (não forçar o Aurum Flow) — arranca com o gráfico de preço limpo;
+    // Sem estudo por default (não forçar nenhum scanner) — arranca com o gráfico de preço limpo;
     // o utilizador escolhe os scanners que quer (podem estar vários ligados em simultâneo).
     return valid
   })
