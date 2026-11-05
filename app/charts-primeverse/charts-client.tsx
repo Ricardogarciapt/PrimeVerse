@@ -29,6 +29,7 @@ const PRIMEVERSE_COMMUNITY_URL = "https://hub.primeverse.ca"
 const availableStudies = [
   "GoldenZone",
   "Momentum",
+  "AurumFlow",
   "TrendShot",
   "Winzone",
   "Sinergy",

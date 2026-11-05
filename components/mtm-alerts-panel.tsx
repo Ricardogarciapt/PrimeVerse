@@ -93,6 +93,7 @@ function classifyAsset(rawTicker?: string | null): AssetClass {
 
 function stateCategory(s?: string | null): StateCat {
   const v = (s || "").toLowerCase()
+  if (v.includes("aurum")) return "AurumFlow"
   if (v === "pending") return "pending"
   if (v === "discarded" || v === "expired") return "discarded" // SL antes de ativar / expirou → não é loss
   if (v === "loss") return "loss"
@@ -221,9 +222,7 @@ export default function MtmAlertsPanel({
     try {
       const res = await fetch("/api/alerts?limit=100", { cache: "no-store" })
       const data = (await res.json()) as { alerts?: Alert[]; error?: string }
-      // Aurum Flow saiu da PrimeVerse (05/11/2026): os alertas dela não aparecem aqui.
-      const lista = Array.isArray(data.alerts) ? data.alerts : []
-      setAlerts(lista.filter((a) => !/aurum/i.test(`${params(a).strategy ?? ""} ${a.alert_name ?? ""}`)))
+      setAlerts(Array.isArray(data.alerts) ? data.alerts : [])
       setError(data.error ?? null)
     } catch {
       setError("Failed to load alerts")
