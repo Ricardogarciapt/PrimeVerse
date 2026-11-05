@@ -52,7 +52,21 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   const { resolvedTheme, setTheme } = useTheme()
   const searchParams = useSearchParams()
   // ?embed=1 (ou ?chrome=0) → sem cabeçalho nosso; &panels=1 traz os painéis de volta.
-  const { embutido, painéis } = lerModoEmbed(searchParams)
+  const modoUrl = lerModoEmbed(searchParams)
+  // O hub (hub.primeverse.ca) mete esta página num iframe SEM passar ?embed=1, e o gráfico
+  // ficava esmagado debaixo do nosso cabeçalho. Dentro de um iframe ligamos o embed sozinhos;
+  // quem quiser o aspecto completo lá dentro passa ?embed=0.
+  const [dentroDeIframe, setDentroDeIframe] = useState(false)
+  useEffect(() => {
+    try {
+      setDentroDeIframe(window.self !== window.top)
+    } catch {
+      setDentroDeIframe(true) // acesso ao top bloqueado = estamos num iframe de outra origem
+    }
+  }, [])
+  const recusaEmbed = searchParams?.get("embed")?.trim().toLowerCase() === "0"
+  const embutido = modoUrl.embutido || (dentroDeIframe && !recusaEmbed)
+  const painéis = modoUrl.embutido ? modoUrl.painéis : embutido ? false : true
   const [mounted, setMounted] = useState(false)
   const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["MTMScanner"])
   const [selectedSymbol, setSelectedSymbol] = useState("OANDA:XAUUSD")
