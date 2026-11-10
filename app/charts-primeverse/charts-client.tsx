@@ -41,10 +41,10 @@ const availableStudies = [
 ] as const
 type StudyKey = (typeof availableStudies)[number]
 
-// Abaixo disto o ecrã conta como mobile (igual a components/ui/use-mobile.tsx)
-const MOBILE_BREAKPOINT = 768
-// Marca que o mobile já recebeu o Premium por defeito uma vez
-const MOBILE_PREMIUM_DEFAULT_KEY = "primeverse_mobile_default_premium_v1"
+// Estudo por defeito (mobile e desktop)
+const DEFAULT_STUDY: StudyKey = "PremiumScanner"
+// Marca que este browser já recebeu o Premium por defeito uma vez
+const PREMIUM_DEFAULT_KEY = "primeverse_default_premium_v1"
 
 const debug = (...args: any[]) => {
   if (process.env.NODE_ENV === "development") console.log(...args)
@@ -74,7 +74,7 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   const embutido = modoUrl.embutido || (dentroDeIframe && !recusaEmbed)
   const painéis = modoUrl.embutido ? modoUrl.painéis : embutido ? false : true
   const [mounted, setMounted] = useState(false)
-  const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>(["MTMScanner"])
+  const [selectedStudies, setSelectedStudies] = useState<StudyKey[]>([DEFAULT_STUDY])
   const [selectedSymbol, setSelectedSymbol] = useState("OANDA:XAUUSD")
   const [selectedTimeframe, setSelectedTimeframe] = useState("15")
 
@@ -82,13 +82,11 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   useEffect(() => {
     setMounted(true)
     try {
-      // Mobile: o estudo por defeito é o Premium Scanner (desktop continua com o MTM).
-      // Quem já tinha escolhas guardadas passa uma vez para o Premium; daí em diante
-      // a escolha do utilizador volta a mandar.
-      const ehMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches
-      if (ehMobile && !localStorage.getItem(MOBILE_PREMIUM_DEFAULT_KEY)) {
-        localStorage.setItem(MOBILE_PREMIUM_DEFAULT_KEY, "1")
-        setSelectedStudies(["PremiumScanner"])
+      // O estudo por defeito passou do MTM para o Premium Scanner. Quem já tinha escolhas
+      // guardadas passa uma vez para o Premium; daí em diante a escolha do utilizador manda.
+      if (!localStorage.getItem(PREMIUM_DEFAULT_KEY)) {
+        localStorage.setItem(PREMIUM_DEFAULT_KEY, "1")
+        setSelectedStudies([DEFAULT_STUDY])
         return
       }
       const savedStudies = localStorage.getItem("primeverse_active_scanners")
@@ -104,7 +102,7 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
 
   const handleStudiesChange = useCallback((studies: string[]) => {
     const filtered = studies.filter((s) => availableStudies.includes(s as StudyKey)) as StudyKey[]
-    setSelectedStudies(filtered.length > 0 ? filtered : ["MTMScanner"])
+    setSelectedStudies(filtered.length > 0 ? filtered : [DEFAULT_STUDY])
   }, [])
 
   // Click num alerta → encaminha o gráfico para o símbolo, timeframe e scanner do sinal
