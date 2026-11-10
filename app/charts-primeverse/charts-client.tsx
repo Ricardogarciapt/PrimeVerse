@@ -41,6 +41,11 @@ const availableStudies = [
 ] as const
 type StudyKey = (typeof availableStudies)[number]
 
+// Abaixo disto o ecrã conta como mobile (igual a components/ui/use-mobile.tsx)
+const MOBILE_BREAKPOINT = 768
+// Marca que o mobile já recebeu o Premium por defeito uma vez
+const MOBILE_PREMIUM_DEFAULT_KEY = "primeverse_mobile_default_premium_v1"
+
 const debug = (...args: any[]) => {
   if (process.env.NODE_ENV === "development") console.log(...args)
 }
@@ -77,6 +82,15 @@ export default function ChartsPrimeverseClient({ podeSair }: { podeSair: boolean
   useEffect(() => {
     setMounted(true)
     try {
+      // Mobile: o estudo por defeito é o Premium Scanner (desktop continua com o MTM).
+      // Quem já tinha escolhas guardadas passa uma vez para o Premium; daí em diante
+      // a escolha do utilizador volta a mandar.
+      const ehMobile = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches
+      if (ehMobile && !localStorage.getItem(MOBILE_PREMIUM_DEFAULT_KEY)) {
+        localStorage.setItem(MOBILE_PREMIUM_DEFAULT_KEY, "1")
+        setSelectedStudies(["PremiumScanner"])
+        return
+      }
       const savedStudies = localStorage.getItem("primeverse_active_scanners")
       if (savedStudies) {
         const parsed = JSON.parse(savedStudies) as string[]
